@@ -1,0 +1,181 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { MessageSquare, ArrowRight, User, Phone, Lock, Eye, EyeOff } from "lucide-react"
+import { LanguageToggle } from "@/components/LanguageToggle"
+import { useTranslations } from "@/lib/i18n/context"
+import { ZONES } from "@/lib/constants"
+
+export default function SignupPage() {
+  const { t } = useTranslations()
+  const [name, setName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [zone, setZone] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    if (password.length < 6) {
+      setError(t.auth.passwordMin)
+      setLoading(false)
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError(t.auth.passwordsNoMatch)
+      setLoading(false)
+      return
+    }
+
+    const formattedPhone = phone.startsWith("0") ? "+254" + phone.slice(1) : phone
+    const email = `${formattedPhone}@githogoro.connect`
+
+    const { error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          phone: formattedPhone,
+          zone,
+        },
+      },
+    })
+
+    if (signUpError) {
+      setError(signUpError.message)
+      setLoading(false)
+      return
+    }
+
+    router.push("/login")
+  }
+
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center px-4 bg-gradient-to-b from-emerald-50 to-[#FAF9F6]">
+      <div className="w-full max-w-sm relative">
+        <div className="text-center mb-8">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-700 mb-4">
+            <MessageSquare className="h-8 w-8 text-white" />
+          </div>
+          <div className="absolute top-0 right-0">
+            <LanguageToggle />
+          </div>
+          <h1 className="text-2xl font-bold">{t.auth.joinTitle}</h1>
+          <p className="text-zinc-500 mt-1">{t.auth.joinSubtitle}</p>
+        </div>
+
+        <form onSubmit={handleSignup} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-700">{t.auth.fullName}</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <Input
+                placeholder="John Kamau"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-700">{t.auth.phoneNumber}</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <Input
+                type="tel"
+                placeholder="0712 345 678"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-700">{t.auth.password}</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Min 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-700">{t.auth.confirmPassword}</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Repeat password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-zinc-700">{t.auth.locationZone}</label>
+            <select
+              value={zone}
+              onChange={(e) => setZone(e.target.value)}
+              className="flex h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              required
+            >
+              <option value="">{t.auth.selectZone}</option>
+              {ZONES.map((z) => (
+                <option key={z} value={z}>{z}</option>
+              ))}
+            </select>
+          </div>
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? t.auth.creating : t.auth.createAccount}
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+
+          <p className="text-center text-sm text-zinc-500">
+            {t.auth.alreadyMember}{" "}
+            <Link href="/login" className="text-emerald-700 font-medium hover:underline">
+              {t.auth.loginLink}
+            </Link>
+          </p>
+        </form>
+      </div>
+    </div>
+  )
+}
