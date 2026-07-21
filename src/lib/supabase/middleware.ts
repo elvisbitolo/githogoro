@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import { verifyAdminToken, COOKIE_NAME } from "@/lib/admin-token"
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -34,7 +35,7 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname.startsWith(p)
     )
 
-  // Admin route protection - require auth AND admin role
+  // Admin route protection - require auth AND (admin role OR valid access key cookie)
   if (isAdminRoute) {
     if (!user) {
       const url = request.nextUrl.clone()
@@ -42,7 +43,13 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.rewrite(url)
     }
 
-    // Check admin role via profile
+    // Check 1: valid admin access key cookie
+    const accessToken = request.cookies.get(COOKIE_NAME)?.value
+    if (accessToken && verifyAdminToken(accessToken)) {
+      return supabaseResponse
+    }
+
+    // Check 2: admin role in database
     const { createClient: createServiceClient } = await import("@supabase/supabase-js")
     const adminCheckSupabase = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

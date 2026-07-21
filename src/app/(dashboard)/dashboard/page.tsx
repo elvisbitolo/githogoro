@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AdminAccessDot } from "@/components/admin-access-dot"
 import {
   MessageSquare,
   Briefcase,
@@ -253,6 +254,7 @@ export default function DashboardPage() {
   }
 
   return (
+    <>
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
       {/* Hero Card */}
       <Card className="mb-6 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white border-0 overflow-hidden relative">
@@ -601,5 +603,7 @@ export default function DashboardPage() {
         </Card>
       )}
     </div>
+    <AdminAccessDot />
+    </>
   )
 }
