@@ -21,7 +21,7 @@ export async function verifyAdmin() {
   // Check 2: valid admin access key cookie
   const cookieStore = await cookies()
   const accessToken = cookieStore.get(COOKIE_NAME)?.value
-  if (accessToken && verifyAdminToken(accessToken)) {
+  if (accessToken && await verifyAdminToken(accessToken)) {
     return { userId: user.id }
   }
 

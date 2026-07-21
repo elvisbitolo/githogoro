@@ -1,20 +1,31 @@
-import crypto from "crypto"
-
-const SECRET = process.env.ADMIN_ACCESS_KEY || "caroline"
 const COOKIE_NAME = "admin_access_token"
 const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000 // 24 hours
 
-export function signAdminToken(userId: string): string {
+async function getKey(): Promise<CryptoKey> {
+  const secret = process.env.ADMIN_ACCESS_KEY || "caroline"
+  const encoder = new TextEncoder()
+  return crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  )
+}
+
+export async function signAdminToken(userId: string): Promise<string> {
+  const key = await getKey()
   const expiry = Date.now() + TOKEN_EXPIRY_MS
   const payload = `${userId}:${expiry}`
-  const signature = crypto
-    .createHmac("sha256", SECRET)
-    .update(payload)
-    .digest("hex")
+  const encoder = new TextEncoder()
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(payload))
+  const signature = Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
   return `${payload}:${signature}`
 }
 
-export function verifyAdminToken(token: string): boolean {
+export async function verifyAdminToken(token: string): Promise<boolean> {
   try {
     const parts = token.split(":")
     if (parts.length !== 3) return false
@@ -24,19 +35,15 @@ export function verifyAdminToken(token: string): boolean {
 
     if (Date.now() > expiry) return false
 
+    const key = await getKey()
     const payload = `${userId}:${expiry}`
-    const expectedSignature = crypto
-      .createHmac("sha256", SECRET)
-      .update(payload)
-      .digest("hex")
+    const encoder = new TextEncoder()
+    const data = encoder.encode(payload)
+    const sigBytes = new Uint8Array(
+      signature.match(/.{2}/g)!.map((byte) => parseInt(byte, 16))
+    )
 
-    if (signature.length !== expectedSignature.length) return false
-
-    let result = 0
-    for (let i = 0; i < signature.length; i++) {
-      result |= signature.charCodeAt(i) ^ expectedSignature.charCodeAt(i)
-    }
-    return result === 0
+    return crypto.subtle.verify("HMAC", key, sigBytes, data)
   } catch {
     return false
   }

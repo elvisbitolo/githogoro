@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const token = signAdminToken(user.id)
+    const token = await signAdminToken(user.id)
 
     const response = NextResponse.json({ success: true })
     response.cookies.set(COOKIE_NAME, token, {

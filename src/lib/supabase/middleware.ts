@@ -45,7 +45,7 @@ export async function updateSession(request: NextRequest) {
 
     // Check 1: valid admin access key cookie
     const accessToken = request.cookies.get(COOKIE_NAME)?.value
-    if (accessToken && verifyAdminToken(accessToken)) {
+    if (accessToken && await verifyAdminToken(accessToken)) {
       return supabaseResponse
     }
 
