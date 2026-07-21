@@ -3,46 +3,97 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Briefcase, MessageSquare, AlertTriangle, TrendingUp, Shield, Activity, Database } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Users, Briefcase, MessageSquare, AlertTriangle, TrendingUp,
+  Shield, Activity, Database, MapPin, Package, Calendar,
+  Radio, CircleDot, X,
+} from "lucide-react"
 import Link from "next/link"
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog"
+
+interface Stats {
+  users: number
+  jobs: number
+  messages: number
+  businesses: number
+  alerts: number
+  events: number
+  bundles: number
+  places: number
+  videos: number
+  recentUsers: number
+  recentMessages: number
+}
+
+interface HealthStatus {
+  db: "connected" | "error"
+  auth: "active" | "inactive"
+}
 
 export default function AdminPanelPage() {
-  const [stats, setStats] = useState([
-    { label: "Users", value: 0, icon: Users, href: "/c-panel/users", color: "text-blue-600" },
-    { label: "Jobs", value: 0, icon: Briefcase, href: "/c-panel/moderation", color: "text-amber-600" },
-    { label: "Messages", value: 0, icon: MessageSquare, href: "/c-panel/moderation", color: "text-emerald-600" },
-    { label: "Businesses", value: 0, icon: TrendingUp, href: "/c-panel/moderation", color: "text-purple-600" },
-    { label: "Alerts", value: 0, icon: AlertTriangle, href: "/c-panel/moderation", color: "text-red-600" },
-  ])
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [health, setHealth] = useState<HealthStatus>({ db: "connected", auth: "active" })
   const [userEmail, setUserEmail] = useState("")
-  const supabase = createClient()
+  const [alertOpen, setAlertOpen] = useState(false)
+  const [alertTitle, setAlertTitle] = useState("")
+  const [alertBody, setAlertBody] = useState("")
+  const [alertSending, setAlertSending] = useState(false)
 
   useEffect(() => {
     (async () => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setUserEmail(user.email || user.phone || "")
-      const [
-        { count: uc },
-        { count: jc },
-        { count: mc },
-        { count: bc },
-        { count: ac },
-      ] = await Promise.all([
-        supabase.from("profiles").select("*", { count: "exact", head: true }),
-        supabase.from("jobs").select("*", { count: "exact", head: true }),
-        supabase.from("messages").select("*", { count: "exact", head: true }),
-        supabase.from("businesses").select("*", { count: "exact", head: true }),
-        supabase.from("alerts").select("*", { count: "exact", head: true }),
-      ])
-      setStats([
-        { label: "Users", value: uc || 0, icon: Users, href: "/c-panel/users", color: "text-blue-600" },
-        { label: "Jobs", value: jc || 0, icon: Briefcase, href: "/c-panel/moderation", color: "text-amber-600" },
-        { label: "Messages", value: mc || 0, icon: MessageSquare, href: "/c-panel/moderation", color: "text-emerald-600" },
-        { label: "Businesses", value: bc || 0, icon: TrendingUp, href: "/c-panel/moderation", color: "text-purple-600" },
-        { label: "Alerts", value: ac || 0, icon: AlertTriangle, href: "/c-panel/moderation", color: "text-red-600" },
-      ])
+
+      try {
+        const res = await fetch("/api/admin/stats")
+        if (res.ok) setStats(await res.json())
+      } catch { /* ignore */ }
+
+      try {
+        const res = await fetch("/api/admin/stats", { method: "HEAD" }).catch(() => null)
+        setHealth((prev) => ({
+          ...prev,
+          db: res && res.ok ? "connected" : "error",
+        }))
+      } catch {
+        setHealth((prev) => ({ ...prev, db: "error" }))
+      }
     })()
-  }, [supabase])
+  }, [])
+
+  const handleBroadcast = async () => {
+    if (!alertTitle.trim() || !alertBody.trim()) return
+    setAlertSending(true)
+    try {
+      await fetch("/api/alerts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: alertTitle, type: "emergency", alertBody }),
+      })
+      setAlertOpen(false)
+      setAlertTitle("")
+      setAlertBody("")
+    } catch { /* ignore */ }
+    setAlertSending(false)
+  }
+
+  const statCards = stats
+    ? [
+        { label: "Users", value: stats.users, icon: Users, href: "/c-panel/users", color: "text-blue-400", sub: `+${stats.recentUsers} this week` },
+        { label: "Messages", value: stats.messages, icon: MessageSquare, href: "/c-panel/moderation", color: "text-emerald-400", sub: `+${stats.recentMessages} this week` },
+        { label: "Jobs", value: stats.jobs, icon: Briefcase, href: "/c-panel/analytics", color: "text-amber-400" },
+        { label: "Businesses", value: stats.businesses, icon: TrendingUp, href: "/c-panel/analytics", color: "text-purple-400" },
+        { label: "Events", value: stats.events, icon: Calendar, href: "/c-panel/analytics", color: "text-cyan-400" },
+        { label: "Bundles", value: stats.bundles, icon: Package, href: "/c-panel/analytics", color: "text-orange-400" },
+        { label: "Places", value: stats.places, icon: MapPin, href: "/c-panel/places", color: "text-pink-400" },
+        { label: "Alerts", value: stats.alerts, icon: AlertTriangle, href: "/c-panel/analytics", color: "text-red-400" },
+      ]
+    : []
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-zinc-100 p-4 sm:p-6 lg:p-8">
@@ -62,14 +113,17 @@ export default function AdminPanelPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-          {stats.map((stat) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+          {statCards.map((stat) => (
             <Link key={stat.label} href={stat.href}>
-              <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors">
+              <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer">
                 <CardContent className="p-4">
                   <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
                   <div className="text-2xl font-bold text-white">{stat.value}</div>
                   <div className="text-xs text-zinc-500">{stat.label}</div>
+                  {stat.sub && (
+                    <div className="text-xs text-emerald-500 mt-1">{stat.sub}</div>
+                  )}
                 </CardContent>
               </Card>
             </Link>
@@ -90,11 +144,18 @@ export default function AdminPanelPage() {
                 <span className="flex items-center gap-2"><Shield className="h-4 w-4 text-emerald-400" /> Moderation Queue</span>
                 <span className="text-zinc-500">→</span>
               </Link>
+              <Link href="/c-panel/places" className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 text-sm hover:bg-zinc-800 transition-colors">
+                <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-pink-400" /> Place Approvals</span>
+                <span className="text-zinc-500">→</span>
+              </Link>
               <Link href="/c-panel/analytics" className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 text-sm hover:bg-zinc-800 transition-colors">
                 <span className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-amber-400" /> Analytics</span>
                 <span className="text-zinc-500">→</span>
               </Link>
-              <button className="flex w-full items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 text-sm hover:bg-zinc-800 transition-colors">
+              <button
+                onClick={() => setAlertOpen(true)}
+                className="flex w-full items-center justify-between rounded-lg bg-red-900/30 border border-red-900/50 px-4 py-3 text-sm hover:bg-red-900/50 transition-colors"
+              >
                 <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-red-400" /> Broadcast Emergency Alert</span>
                 <span className="text-zinc-500">→</span>
               </button>
@@ -108,15 +169,27 @@ export default function AdminPanelPage() {
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-zinc-400">Database</span>
-                <span className="flex items-center gap-1 text-emerald-400"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Connected</span>
+                {health.db === "connected" ? (
+                  <span className="flex items-center gap-1 text-emerald-400"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Connected</span>
+                ) : (
+                  <span className="flex items-center gap-1 text-red-400"><span className="h-2 w-2 rounded-full bg-red-400" /> Error</span>
+                )}
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-zinc-400">Auth</span>
-                <span className="flex items-center gap-1 text-emerald-400"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Active</span>
+                {health.auth === "active" ? (
+                  <span className="flex items-center gap-1 text-emerald-400"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Active</span>
+                ) : (
+                  <span className="flex items-center gap-1 text-red-400"><span className="h-2 w-2 rounded-full bg-red-400" /> Inactive</span>
+                )}
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-zinc-400">Storage</span>
-                <span className="flex items-center gap-1 text-emerald-400"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Operational</span>
+                <span className="text-zinc-400">API</span>
+                {stats ? (
+                  <span className="flex items-center gap-1 text-emerald-400"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Operational</span>
+                ) : (
+                  <span className="flex items-center gap-1 text-amber-400"><span className="h-2 w-2 rounded-full bg-amber-400" /> Loading</span>
+                )}
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-zinc-400">Real-time</span>
@@ -129,6 +202,49 @@ export default function AdminPanelPage() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-red-400 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" /> Broadcast Emergency Alert
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Title</label>
+              <Input
+                value={alertTitle}
+                onChange={(e) => setAlertTitle(e.target.value)}
+                placeholder="Emergency alert title..."
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Message</label>
+              <textarea
+                value={alertBody}
+                onChange={(e) => setAlertBody(e.target.value)}
+                placeholder="Alert message body..."
+                rows={4}
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setAlertOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleBroadcast}
+                disabled={alertSending || !alertTitle.trim() || !alertBody.trim()}
+              >
+                {alertSending ? "Sending..." : "Broadcast Now"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

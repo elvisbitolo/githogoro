@@ -23,11 +23,8 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
     })
 
     // Load existing messages
-    supabase
-      .from("messages")
-      .select("*")
-      .eq("room_id", room.id)
-      .order("created_at", { ascending: true })
+    fetch(`/api/chat-rooms/${room.id}/messages`)
+      .then((res) => res.json())
       .then(({ data }) => {
         if (data) setMessages(data)
       })
@@ -62,11 +59,13 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
     e.preventDefault()
     if (!newMessage.trim() || !userId) return
 
-    const { error } = await supabase.from("messages").insert({
-      room_id: room.id,
-      user_id: userId,
-      text: newMessage.trim(),
+    const res = await fetch(`/api/chat-rooms/${room.id}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: newMessage.trim() }),
     })
+
+    const { error } = await res.json()
 
     if (!error) setNewMessage("")
   }
@@ -92,7 +91,7 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex gap-2 ${msg.user_id === userId ? "flex-row-reverse" : ""}`}
+            className={`flex gap-2 ${(msg as any).userId === userId ? "flex-row-reverse" : ""}`}
           >
             <Avatar className="h-8 w-8 mt-1">
               <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700">
@@ -101,7 +100,7 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
             </Avatar>
             <div
               className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
-                msg.user_id === userId
+                (msg as any).userId === userId
                   ? "bg-emerald-700 text-white rounded-br-md"
                   : "bg-zinc-100 text-zinc-900 rounded-bl-md"
               }`}
@@ -109,10 +108,10 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
               <p>{msg.text}</p>
               <p
                 className={`text-[10px] mt-1 ${
-                  msg.user_id === userId ? "text-emerald-200" : "text-zinc-400"
+                  (msg as any).userId === userId ? "text-emerald-200" : "text-zinc-400"
                 }`}
               >
-                {formatRelativeTime(msg.created_at)}
+                {formatRelativeTime((msg as any).createdAt)}
               </p>
             </div>
           </div>

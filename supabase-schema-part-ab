@@ -1,0 +1,573 @@
+);
+
+-- CreateTable
+CREATE TABLE "posts" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "content" TEXT,
+    "media_urls" JSONB NOT NULL DEFAULT '[]',
+    "location" TEXT,
+    "privacy" "PostPrivacy" NOT NULL DEFAULT 'public',
+    "likes_count" INTEGER NOT NULL DEFAULT 0,
+    "comments_count" INTEGER NOT NULL DEFAULT 0,
+    "shares_count" INTEGER NOT NULL DEFAULT 0,
+    "is_edited" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "posts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "post_likes" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "post_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "type" "ReactionType" NOT NULL DEFAULT 'like',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "post_likes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "post_comments" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "post_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "text" TEXT NOT NULL,
+    "likes_count" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "post_comments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "comment_likes" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "comment_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "type" "ReactionType" NOT NULL DEFAULT 'like',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "comment_likes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "post_shares" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "post_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "post_shares_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "saved_posts" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "post_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "saved_posts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "follows" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "follower_id" UUID NOT NULL,
+    "following_id" UUID NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "follows_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "notifications" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "type" "NotificationType" NOT NULL,
+    "title" TEXT NOT NULL,
+    "body" TEXT,
+    "link" TEXT,
+    "is_read" BOOLEAN NOT NULL DEFAULT false,
+    "from_user_id" UUID,
+    "entity_id" UUID,
+    "entity_type" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "skills" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "category" TEXT NOT NULL,
+    "price_range" TEXT,
+    "availability" "SkillAvailability" NOT NULL DEFAULT 'available',
+    "rating" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "review_count" INTEGER NOT NULL DEFAULT 0,
+    "photos" JSONB NOT NULL DEFAULT '[]',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "skills_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "skill_reviews" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "skill_id" UUID NOT NULL,
+    "reviewer_id" UUID NOT NULL,
+    "reviewee_id" UUID NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "comment" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "skill_reviews_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "harambees" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "creator_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "goal_amount" DOUBLE PRECISION NOT NULL,
+    "raised_amount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "status" "FundraiserStatus" NOT NULL DEFAULT 'active',
+    "photos" JSONB NOT NULL DEFAULT '[]',
+    "category" TEXT NOT NULL DEFAULT 'general',
+    "is_verified" BOOLEAN NOT NULL DEFAULT false,
+    "ends_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "harambees_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "harambee_donations" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "harambee_id" UUID NOT NULL,
+    "donor_id" UUID NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "message" TEXT,
+    "is_anonymous" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "harambee_donations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "tontine_groups" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "creator_id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "contribution_amount" DOUBLE PRECISION NOT NULL,
+    "frequency" TEXT NOT NULL DEFAULT 'weekly',
+    "max_members" INTEGER NOT NULL DEFAULT 20,
+    "current_cycle" INTEGER NOT NULL DEFAULT 0,
+    "total_cycles" INTEGER NOT NULL DEFAULT 0,
+    "status" "TontineStatus" NOT NULL DEFAULT 'active',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "tontine_groups_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "tontine_members" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "group_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "position" INTEGER NOT NULL,
+    "has_received" BOOLEAN NOT NULL DEFAULT false,
+    "joined_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "tontine_members_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "tontine_contributions" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "group_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "cycle" INTEGER NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "is_paid" BOOLEAN NOT NULL DEFAULT false,
+    "paid_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "tontine_contributions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "micro_loans" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "lender_id" UUID NOT NULL,
+    "borrower_id" UUID NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "interest_rate" DOUBLE PRECISION,
+    "description" TEXT,
+    "status" "LoanStatus" NOT NULL DEFAULT 'pending',
+    "due_date" TIMESTAMP(3),
+    "repaid_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "micro_loans_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "savings_challenges" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "target_amount" DOUBLE PRECISION NOT NULL,
+    "duration" TEXT NOT NULL,
+    "start_date" TIMESTAMP(3) NOT NULL,
+    "end_date" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "savings_challenges_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "savings_challenge_members" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "challenge_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "saved_amount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "joined_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "savings_challenge_members_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "group_purchases" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "creator_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "product" TEXT NOT NULL,
+    "target_pledge" DOUBLE PRECISION NOT NULL,
+    "current_pledge" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "min_pledge" DOUBLE PRECISION NOT NULL,
+    "deadline" TIMESTAMP(3),
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "group_purchases_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "group_purchase_pledges" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "group_purchase_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
+    "is_confirmed" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "group_purchase_pledges_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "price_reports" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "product" TEXT NOT NULL,
+    "shop" TEXT NOT NULL,
+    "price" DOUBLE PRECISION NOT NULL,
+    "zone" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "price_reports_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "errands" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "creator_id" UUID NOT NULL,
+    "accepter_id" UUID,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "pickup_location" TEXT NOT NULL,
+    "dropoff_location" TEXT,
+    "tip" DOUBLE PRECISION,
+    "status" "ErrandStatus" NOT NULL DEFAULT 'open',
+    "due_date" TIMESTAMP(3),
+    "completed_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "errands_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ride_shares" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "driver_id" UUID NOT NULL,
+    "rider_id" UUID,
+    "from" TEXT NOT NULL,
+    "to" TEXT NOT NULL,
+    "departure_time" TIMESTAMP(3) NOT NULL,
+    "seats" INTEGER NOT NULL DEFAULT 1,
+    "price" DOUBLE PRECISION,
+    "status" "RideStatus" NOT NULL DEFAULT 'scheduled',
+    "description" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ride_shares_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "meal_shares" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "servings" INTEGER NOT NULL DEFAULT 1,
+    "location" TEXT,
+    "available_until" TIMESTAMP(3),
+    "photo" TEXT,
+    "is_claimed" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "meal_shares_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "tool_listings" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "photo" TEXT,
+    "is_available" BOOLEAN NOT NULL DEFAULT true,
+    "deposit" DOUBLE PRECISION,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "tool_listings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "tool_borrows" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tool_id" UUID NOT NULL,
+    "borrower_id" UUID NOT NULL,
+    "borrow_date" TIMESTAMP(3) NOT NULL,
+    "return_date" TIMESTAMP(3),
+    "is_returned" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "tool_borrows_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "emergency_contacts" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "relationship" TEXT NOT NULL,
+    "blood_type" TEXT,
+    "allergies" TEXT,
+    "conditions" TEXT,
+    "is_default" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "emergency_contacts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "safe_routes" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "from" TEXT NOT NULL,
+    "to" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "time_of_day" TEXT NOT NULL,
+    "comment" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "safe_routes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "child_check_ins" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "child_name" TEXT NOT NULL,
+    "location" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'safe',
+    "message" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "child_check_ins_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "missing_persons" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "category" TEXT NOT NULL,
+    "photo" TEXT,
+    "location" TEXT,
+    "contact_phone" TEXT NOT NULL,
+    "status" "MissingStatus" NOT NULL DEFAULT 'active',
+    "resolved_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "missing_persons_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "obituaries" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "funeral_date" TIMESTAMP(3),
+    "funeral_location" TEXT,
+    "fund_goal" DOUBLE PRECISION,
+    "fund_raised" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "photo" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "obituaries_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "condolences" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "obituary_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "message" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "condolences_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "talent_showcases" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "category" TEXT NOT NULL,
+    "media_url" TEXT,
+    "likes_count" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "talent_showcases_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "parenting_posts" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "parenting_posts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "recipes" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "ingredients" JSONB NOT NULL,
+    "steps" TEXT NOT NULL,
+    "photo" TEXT,
+    "likes_count" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "recipes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "photo_memories" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "photo_url" TEXT NOT NULL,
+    "year" INTEGER,
+    "likes_count" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "photo_memories_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "petitions" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "creator_id" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "category" TEXT,
+    "target_signatures" INTEGER NOT NULL DEFAULT 100,
+    "current_signatures" INTEGER NOT NULL DEFAULT 0,
+    "status" "PetitionStatus" NOT NULL DEFAULT 'active',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "petitions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "petition_signatures" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "petition_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "message" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "petition_signatures_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "clinic_listings" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "name" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
+    "description" TEXT,
+    "phone" TEXT,
+    "location" TEXT,
+    "opening_hours" TEXT,
+    "rating" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "review_count" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "clinic_listings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "blood_donors" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "blood_type" TEXT NOT NULL,
+    "is_willing" BOOLEAN NOT NULL DEFAULT true,
+    "last_donation" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "blood_donors_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "health_tips" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "category" TEXT,
+    "photo" TEXT,

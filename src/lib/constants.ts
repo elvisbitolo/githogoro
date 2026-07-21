@@ -5,7 +5,10 @@ export const ADMIN_ID_PROCESS = process.env.ADMIN_USER_ID || ""
 export const APP_VERSION = "1.0.0"
 
 export const ZONES = [
-  "Zone A", "Zone B", "Zone C", "72 Estate", "Runda Meadows", "Muringa Farm"
+  "Matopeni", "72 Estate", "Blue Estate", "Green Estate",
+  "Mji wa Huruma", "Shantii", "Runda Meadows", "Muringa Farm",
+  "Zone A", "Zone B", "Zone C", "Zone D",
+  "Githogoro Stage", "Northern Bypass", "Kiwaru", "Other",
 ] as const
 
 export const JOB_TYPES = ["full-time", "part-time", "casual", "contract", "internship"] as const

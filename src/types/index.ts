@@ -8,13 +8,15 @@ export interface Profile {
   name: string
   phone: string
   zone: string | null
-  avatar_url: string | null
+  avatarUrl: string | null
   role: UserRole
-  reputation_score: number
+  reputationScore: number
+  reputationPoints: number
   badges: string[]
-  is_verified: boolean
-  created_at: string
-  last_seen: string | null
+  isVerified: boolean
+  createdAt: string
+  lastSeen: string | null
+  lastActiveAt: string | null
 }
 
 export interface ChatRoom {
@@ -22,32 +24,40 @@ export interface ChatRoom {
   name: string
   type: ChatRoomType
   zone: string | null
-  created_by: string
-  created_at: string
+  description: string | null
+  avatarUrl: string | null
+  createdBy: string
+  createdAt: string
 }
 
 export interface Message {
   id: string
-  room_id: string
-  user_id: string
+  roomId: string
+  userId: string
   text: string | null
-  media_urls: string[]
-  created_at: string
+  mediaUrls: string[]
+  createdAt: string
   sender?: Profile
+  reactions?: MessageReaction[]
+}
+
+export interface MessageReaction {
+  emoji: string
+  userId: string
 }
 
 export interface Job {
   id: string
   title: string
   description: string
-  employer_name: string
+  employerName: string
   location: string
-  salary_range: string | null
-  job_type: JobType
-  contact_phone: string
-  is_active: boolean
-  created_by: string
-  created_at: string
+  salaryRange: string | null
+  jobType: JobType
+  contactPhone: string
+  isActive: boolean
+  createdBy: string
+  createdAt: string
 }
 
 export interface Business {
@@ -55,13 +65,15 @@ export interface Business {
   name: string
   category: string
   description: string | null
-  location_lat: number | null
-  location_lng: number | null
+  locationLat: number | null
+  locationLng: number | null
   phone: string
-  is_featured: boolean
+  openingHours: any | null
+  isFeatured: boolean
   photos: string[]
-  created_by: string
-  created_at: string
+  ownerId: string | null
+  createdBy: string
+  createdAt: string
 }
 
 export interface Event {
@@ -71,29 +83,44 @@ export interface Event {
   date: string
   location: string
   category: string
-  created_by: string
-  created_at: string
+  coverPhoto: string | null
+  maxAttendees: number | null
+  isFree: boolean
+  ticketPrice: number | null
+  createdBy: string
+  createdAt: string
 }
 
 export interface Conversation {
   id: string
-  created_at: string
+  createdAt: string
 }
 
 export interface ConversationParticipant {
   id: string
-  conversation_id: string
-  user_id: string
-  last_read_at: string | null
+  conversationId: string
+  userId: string
+  lastReadAt: string | null
+  isMuted: boolean
+  isArchived: boolean
 }
 
 export interface PrivateMessage {
   id: string
-  conversation_id: string
-  sender_id: string
-  text: string
-  created_at: string
-  profiles?: Profile
+  conversationId: string
+  senderId: string
+  text: string | null
+  type: string
+  mediaUrl: string | null
+  replyToId: string | null
+  isStarred: boolean
+  isDeleted: boolean
+  isEdited: boolean
+  createdAt: string
+  readAt: string | null
+  sender?: Profile
+  reactions?: MessageReaction[]
+  replyTo?: { id: string; text: string | null; sender?: { name: string } }
 }
 
 export interface Alert {
@@ -101,6 +128,48 @@ export interface Alert {
   type: AlertType
   title: string
   body: string
-  created_by: string
-  created_at: string
+  createdBy: string
+  createdAt: string
+}
+
+export interface Bundle {
+  id: string
+  provider: string
+  name: string
+  price: number
+  dataAmount: string
+  validity: string
+  category: string
+  url: string | null
+  description: string | null
+  upvotes: number
+  downvotes: number
+  createdBy: string
+  createdAt: string
+}
+
+export interface MarketplaceItem {
+  id: string
+  title: string
+  description: string | null
+  price: number
+  category: string
+  photos: string[]
+  location: string | null
+  status: string
+  sellerId: string
+  createdAt: string
+}
+
+export interface LostFoundItem {
+  id: string
+  title: string
+  description: string | null
+  category: string
+  location: string | null
+  photo: string | null
+  type: string
+  status: string
+  userId: string
+  createdAt: string
 }

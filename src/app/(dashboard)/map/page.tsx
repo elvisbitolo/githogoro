@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
-import { createClient } from "@/lib/supabase/client"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { Place } from "./map-container"
@@ -29,23 +28,21 @@ export default function MapPage() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [showReportForm, setShowReportForm] = useState(false)
-  const supabase = createClient()
 
   useEffect(() => {
     async function fetchPlaces() {
-      const [placesResult, businessesResult] = await Promise.all([
-        supabase.from("community_places").select("*").eq("is_approved", true),
-        supabase
-          .from("businesses")
-          .select("id, name, category, description, location_lat, location_lng, phone")
-          .not("location_lat", "is", null)
-          .not("location_lng", "is", null),
+      const [placesRes, businessesRes] = await Promise.all([
+        fetch("/api/places"),
+        fetch("/api/businesses"),
       ])
+
+      const placesData = placesRes.ok ? await placesRes.json() : []
+      const businessesData = businessesRes.ok ? await businessesRes.json() : []
 
       const allPlaces: Place[] = []
 
-      if (placesResult.data) {
-        for (const p of placesResult.data) {
+      if (Array.isArray(placesData)) {
+        for (const p of placesData) {
           allPlaces.push({
             id: p.id,
             name: p.name,
@@ -59,15 +56,15 @@ export default function MapPage() {
         }
       }
 
-      if (businessesResult.data) {
-        for (const b of businessesResult.data) {
+      if (Array.isArray(businessesData)) {
+        for (const b of businessesData) {
           allPlaces.push({
             id: b.id,
             name: b.name,
             category: b.category,
             description: b.description ?? undefined,
-            lat: b.location_lat!,
-            lng: b.location_lng!,
+            lat: b.locationLat!,
+            lng: b.locationLng!,
             phone: b.phone ?? undefined,
             isOfficial: true,
           })
@@ -79,7 +76,7 @@ export default function MapPage() {
     }
 
     fetchPlaces()
-  }, [supabase])
+  }, [])
 
   const categories = Array.from(new Set(places.map((p) => p.category)))
   const filteredPlaces = selectedCategory
@@ -156,12 +153,10 @@ export default function MapPage() {
         onClose={() => setShowReportForm(false)}
         onSubmitted={() => {
           setLoading(true)
-          supabase
-            .from("community_places")
-            .select("*")
-            .eq("is_approved", true)
-            .then(({ data }) => {
-              if (data) {
+          fetch("/api/places")
+            .then((res) => res.ok ? res.json() : [])
+            .then((data: any[]) => {
+              if (Array.isArray(data)) {
                 setPlaces((prev) => {
                   const existingIds = new Set(prev.map((p) => p.id))
                   const newPlaces: Place[] = data

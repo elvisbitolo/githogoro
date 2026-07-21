@@ -37,18 +37,22 @@ export default function UploadVideoPage() {
       return
     }
 
-    const { error: insertError } = await supabase.from("videos").insert({
-      title: title.trim(),
-      description: description.trim() || null,
-      url: youtubeUrl.trim(),
-      thumbnail_url: thumbnailUrl.trim() || null,
-      user_id: user.id,
+    const res = await fetch("/api/videos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: title.trim(),
+        description: description.trim() || null,
+        url: youtubeUrl.trim(),
+        thumbnail_url: thumbnailUrl.trim() || null,
+      }),
     })
 
     setSubmitting(false)
 
-    if (insertError) {
-      setError(insertError.message)
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error || "Failed to create video.")
       return
     }
 

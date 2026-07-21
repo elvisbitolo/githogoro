@@ -6,7 +6,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MessageSquare, ArrowRight, User, Phone, Lock, Eye, EyeOff } from "lucide-react"
+import { MessageSquare, ArrowRight, User, Phone, Lock, Eye, EyeOff, AlertCircle } from "lucide-react"
 import { LanguageToggle } from "@/components/LanguageToggle"
 import { useTranslations } from "@/lib/i18n/context"
 import { ZONES } from "@/lib/constants"
@@ -44,7 +44,7 @@ export default function SignupPage() {
     const formattedPhone = phone.startsWith("0") ? "+254" + phone.slice(1) : phone
     const email = `${formattedPhone}@githogoro.connect`
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -62,7 +62,27 @@ export default function SignupPage() {
       return
     }
 
-    router.push("/login")
+    // Try to sign in immediately (works when email confirmation is disabled)
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError) {
+      setError("Account created successfully! Please log in with your credentials.")
+      setLoading(false)
+      return
+    }
+
+    // Ensure profile exists in the database
+    await fetch("/api/profiles/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, phone: formattedPhone, zone }),
+    })
+
+    router.push("/dashboard")
+    router.refresh()
   }
 
   return (
@@ -161,7 +181,12 @@ export default function SignupPage() {
             </select>
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? t.auth.creating : t.auth.createAccount}

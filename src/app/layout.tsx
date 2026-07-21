@@ -10,28 +10,103 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Githogoro Connect — Karibu Githogoro",
+    default: "Githogoro Connect — Community App for Githogoro, Nairobi | Jobs, Businesses, Chat",
     template: "%s | Githogoro Connect",
   },
-  description: "Karibu Githogoro — The Heart of Our Community. Chat, find jobs, discover local businesses, and connect with your neighbors in Githogoro, Nairobi.",
-  keywords: ["Githogoro", "Runda", "Nairobi", "community", "jobs", "businesses", "Rysa FC", "Githogoro Connect"],
-  authors: [{ name: "Githogoro Connect" }],
+  description:
+    "Githogoro Connect is the #1 community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, join groups, buy & sell in the marketplace, get alerts, and connect with the Githogoro community near Runda and Northern Bypass.",
+  keywords: [
+    "Githogoro",
+    "Githogoro Connect",
+    "Githogoro community",
+    "Githogoro Nairobi",
+    "Githogoro app",
+    "Githogoro jobs",
+    "Githogoro businesses",
+    "Githogoro marketplace",
+    "Githogoro chat",
+    "Githogoro events",
+    "Githogoro news",
+    "Githogoro Runda",
+    "Githogoro Northern Bypass",
+    "Githogoro Westlands",
+    "Karura ward",
+    "Nairobi community app",
+    "Nairobi jobs",
+    "Nairobi marketplace",
+    "Kenya community",
+    "Runda estate",
+    "Githogoro harambee",
+    "Githogoro tontine",
+    "Githogoro loans",
+    "Githogoro skills",
+    "Githogoro talents",
+    "Githogoro groups",
+    "Githogoro safety",
+    "Githogoro errands",
+    "Githogoro rides",
+    "Githogoro meals",
+    "Githogoro tools",
+    "Githogoro stories",
+    "Githogoro governance",
+    "Githogoro petition",
+    "Githogoro lost and found",
+    "Githogoro SOS",
+    "Githogoro alerts",
+    "Githogoro bundles",
+    "Githogoro polls",
+    "Githogoro leaderboard",
+    "Githogoro recipes",
+    "Githogoro parenting",
+    "Githogoro memories",
+    "Githogoro health",
+    "Githogoro obituaries",
+    "Githogoro prices",
+    "Githogoro savings",
+    "Githogoro group buy",
+    "Githogoro petitions",
+    "githogoroconnect",
+  ],
+  authors: [{ name: "Githogoro Connect", url: "https://githogoroconnect.com" }],
+  creator: "Githogoro Connect",
+  publisher: "Githogoro Connect",
   openGraph: {
     type: "website",
     locale: "en_KE",
+    url: "https://githogoroconnect.com",
     siteName: "Githogoro Connect",
-    title: "Githogoro Connect — Karibu Githogoro",
-    description: "The Heart of Our Community. Chat, jobs, businesses, and events in Githogoro.",
+    title: "Githogoro Connect — Community App for Githogoro, Nairobi",
+    description:
+      "The #1 community app for Githogoro, Nairobi. Chat, jobs, businesses, marketplace, events, and more. Karibu Githogoro!",
+    images: [
+      {
+        url: "https://githogoro.vercel.app/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Githogoro Connect — Community App for Githogoro, Nairobi",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Githogoro Connect",
-    description: "The Heart of Our Community.",
+    title: "Githogoro Connect — Community App for Githogoro, Nairobi",
+    description:
+      "Chat, find jobs, discover businesses, and connect with your neighbors in Githogoro, Nairobi.",
+    images: ["https://githogoro.vercel.app/og-image.png"],
   },
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/icon-192x192.png",
     apple: "/icons/icon-192x192.png",
+  },
+  alternates: {
+    canonical: "https://githogoro.vercel.app",
+  },
+  other: {
+    "google-site-verification": "EO1A_95MmyPuFD2ULeSrZ2xzliMUJEdAWtRmclDUwPo",
+    "application-name": "Githogoro Connect",
+    "msapplication-TileColor": "#1B4332",
+    "theme-color": "#1B4332",
   },
 }
 
@@ -47,8 +122,45 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Githogoro Connect",
+    url: "https://githogoro.vercel.app",
+    description:
+      "The #1 community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, join groups, buy & sell in the marketplace, and connect with the Githogoro community.",
+    applicationCategory: "SocialNetworkingApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "KES",
+    },
+    about: {
+      "@type": "Place",
+      name: "Githogoro",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Nairobi",
+        addressRegion: "Westlands",
+        addressCountry: "KE",
+      },
+    },
+    author: {
+      "@type": "Organization",
+      name: "Githogoro Connect",
+      url: "https://githogoro.vercel.app",
+    },
+  }
+
   return (
     <html lang="en" className={`${inter.variable} antialiased`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-dvh bg-[#FAF9F6] text-zinc-900 font-sans">
         <LanguageProvider>
           {children}

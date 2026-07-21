@@ -6,7 +6,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Phone, Lock, ArrowRight, MessageSquare, Eye, EyeOff } from "lucide-react"
+import { Phone, Lock, ArrowRight, MessageSquare, Eye, EyeOff, AlertCircle } from "lucide-react"
 import { LanguageToggle } from "@/components/LanguageToggle"
 import { useTranslations } from "@/lib/i18n/context"
 
@@ -97,7 +97,12 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? t.auth.loggingIn : t.auth.login}

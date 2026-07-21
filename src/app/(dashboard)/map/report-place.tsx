@@ -133,16 +133,26 @@ export function ReportPlace({ open, onClose, onSubmitted }: ReportPlaceProps) {
         data: { user },
       } = await supabase.auth.getUser()
 
-      const { error: insertError } = await supabase.from("community_places").insert({
-        name: name.trim(),
-        category,
-        description: description.trim() || null,
-        phone: phone.trim() || null,
-        lat,
-        lng,
-        submitted_by: user?.id || null,
-        is_approved: false,
-        is_official: false,
+      const { error: insertError } = await fetch("/api/places", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          category,
+          description: description.trim() || null,
+          phone: phone.trim() || null,
+          lat,
+          lng,
+          submitted_by: user?.id || null,
+          is_approved: false,
+          is_official: false,
+        }),
+      }).then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({ error: { message: "Failed to submit" } }))
+          return { error: { message: body.error?.message || "Failed to submit" } }
+        }
+        return { error: null }
       })
 
       if (insertError) {

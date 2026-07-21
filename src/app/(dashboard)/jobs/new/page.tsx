@@ -37,20 +37,25 @@ export default function NewJobPage() {
       return
     }
 
-    const { error: insertError } = await supabase.from("jobs").insert({
-      title,
-      employer_name: employerName,
-      location,
-      job_type: jobType,
-      salary_range: salaryRange || null,
-      contact_phone: contactPhone || null,
-      description,
-      is_active: true,
-      created_by: user.id,
+    const res = await fetch("/api/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        employer_name: employerName,
+        location,
+        job_type: jobType,
+        salary_range: salaryRange || null,
+        contact_phone: contactPhone || null,
+        description,
+        is_active: true,
+        created_by: user.id,
+      }),
     })
 
-    if (insertError) {
-      setError(insertError.message)
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error || "Failed to post job.")
       setSubmitting(false)
       return
     }

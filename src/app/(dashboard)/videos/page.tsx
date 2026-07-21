@@ -13,11 +13,11 @@ type Profile = {
 
 type Comment = {
   id: string
-  video_id: string
+  videoId: string
   text: string
-  created_at: string
-  user_id: string
-  profiles: { name: string | null }
+  createdAt: string
+  userId: string
+  user: { name: string | null }
 }
 
 type VideoItem = {
@@ -25,12 +25,12 @@ type VideoItem = {
   title: string
   description: string | null
   url: string
-  thumbnail_url: string | null
-  created_at: string
-  user_id: string
-  profiles: Profile
-  likes_count?: number
-  comments_count?: number
+  thumbnailUrl: string | null
+  createdAt: string
+  userId: string
+  user: Profile
+  likesCount?: number
+  commentsCount?: number
 }
 
 export default function VideosPage() {
@@ -45,65 +45,72 @@ export default function VideosPage() {
   const supabase = createClient()
 
   const fetchVideos = useCallback(async () => {
-    const { data } = await supabase
-      .from("videos")
-      .select("*, profiles!inner(name)")
-      .order("created_at", { ascending: false })
-
-    if (data) setVideos(data as unknown as VideoItem[])
+    const res = await fetch("/api/videos")
+    if (res.ok) {
+      const data = await res.json()
+      const mapped = data.map((v: any) => ({
+        ...v,
+        profiles: v.user,
+      }))
+      setVideos(mapped)
+    }
     setLoading(false)
-  }, [supabase])
+  }, [])
 
   const fetchLikes = useCallback(async (videoIds: string[]) => {
     if (videoIds.length === 0) return
 
-    const { data: likesData } = await supabase
-      .from("video_likes")
-      .select("video_id, user_id")
-
-    if (!likesData) return
-
     const counts: Record<string, number> = {}
     const liked: Set<string> = new Set()
-    const userId = currentUser?.id
 
-    for (const like of likesData) {
-      counts[like.video_id] = (counts[like.video_id] || 0) + 1
-      if (userId && like.user_id === userId) {
-        liked.add(like.video_id)
-      }
+    const results = await Promise.all(
+      videoIds.map(async (vidId) => {
+        const res = await fetch(`/api/videos/${vidId}/like`)
+        if (!res.ok) return { vidId, count: 0, isLiked: false }
+        const data = await res.json()
+        return { vidId, count: data.count, isLiked: data.liked }
+      })
+    )
+
+    for (const r of results) {
+      counts[r.vidId] = r.count
+      if (r.isLiked) liked.add(r.vidId)
     }
 
     setVideoLikes(counts)
     setLikedIds(liked)
-  }, [supabase, currentUser])
+  }, [])
 
   const fetchComments = useCallback(async (videoIds: string[]) => {
     if (videoIds.length === 0) return
 
-    const { data: commentsData } = await supabase
-      .from("video_comments")
-      .select("*, profiles(name)")
-      .in("video_id", videoIds)
-      .order("created_at", { ascending: true })
-
-    if (!commentsData) return
-
     const grouped: Record<string, Comment[]> = {}
-    for (const comment of commentsData) {
-      const c = comment as unknown as Comment
-      if (!grouped[c.video_id]) grouped[c.video_id] = []
-      grouped[c.video_id].push(c)
+
+    const results = await Promise.all(
+      videoIds.map(async (vidId) => {
+        const res = await fetch(`/api/videos/${vidId}/comments`)
+        if (!res.ok) return { vidId, comments: [] }
+        const data = await res.json()
+        const mapped = data.map((c: any) => ({
+          ...c,
+          profiles: c.user,
+        }))
+        return { vidId, comments: mapped }
+      })
+    )
+
+    for (const r of results) {
+      grouped[r.vidId] = r.comments
     }
 
     setComments(grouped)
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setCurrentUser(user)
     })
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     fetchVideos()
@@ -120,40 +127,25 @@ export default function VideosPage() {
   const handleLike = async (videoId: string) => {
     if (!currentUser) return
 
-    const alreadyLiked = likedIds.has(videoId)
+    const res = await fetch(`/api/videos/${videoId}/like`, { method: "POST" })
+    if (!res.ok) return
 
-    if (alreadyLiked) {
-      await supabase
-        .from("video_likes")
-        .delete()
-        .eq("video_id", videoId)
-        .eq("user_id", currentUser.id)
+    const { liked, count } = await res.json()
 
-      setLikedIds((prev) => {
-        const next = new Set(prev)
-        next.delete(videoId)
-        return next
-      })
-      setVideoLikes((prev) => ({
-        ...prev,
-        [videoId]: Math.max(0, (prev[videoId] || 0) - 1),
-      }))
-    } else {
-      await supabase.from("video_likes").insert({
-        video_id: videoId,
-        user_id: currentUser.id,
-      })
-
+    if (liked) {
       setLikedIds((prev) => {
         const next = new Set(prev)
         next.add(videoId)
         return next
       })
-      setVideoLikes((prev) => ({
-        ...prev,
-        [videoId]: (prev[videoId] || 0) + 1,
-      }))
+    } else {
+      setLikedIds((prev) => {
+        const next = new Set(prev)
+        next.delete(videoId)
+        return next
+      })
     }
+    setVideoLikes((prev) => ({ ...prev, [videoId]: count }))
   }
 
   const handleCommentSubmit = async (videoId: string) => {
@@ -162,23 +154,20 @@ export default function VideosPage() {
 
     setSubmittingComment((prev) => ({ ...prev, [videoId]: true }))
 
-    await supabase.from("video_comments").insert({
-      video_id: videoId,
-      user_id: currentUser.id,
-      text,
+    await fetch(`/api/videos/${videoId}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
     })
 
-    const { data: newComments } = await supabase
-      .from("video_comments")
-      .select("*, profiles(name)")
-      .eq("video_id", videoId)
-      .order("created_at", { ascending: true })
-
-    if (newComments) {
-      setComments((prev) => ({
-        ...prev,
-        [videoId]: newComments as unknown as Comment[],
+    const res = await fetch(`/api/videos/${videoId}/comments`)
+    if (res.ok) {
+      const data = await res.json()
+      const mapped = data.map((c: any) => ({
+        ...c,
+        profiles: c.commenter,
       }))
+      setComments((prev) => ({ ...prev, [videoId]: mapped }))
     }
 
     setCommentTexts((prev) => ({ ...prev, [videoId]: "" }))
@@ -241,12 +230,12 @@ export default function VideosPage() {
                 <CardContent className="p-0">
                   <div className="flex items-center gap-2.5 px-4 pt-4 pb-2">
                     <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-sm font-semibold text-emerald-700">
-                      {(video.profiles?.name || "U").charAt(0).toUpperCase()}
+                      {(video.user?.name || "U").charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{video.profiles?.name || "Unknown"}</p>
+                      <p className="text-sm font-medium">{video.user?.name || "Unknown"}</p>
                       <p className="text-xs text-zinc-400">
-                        {new Date(video.created_at).toLocaleDateString()}
+                        {new Date(video.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -298,11 +287,11 @@ export default function VideosPage() {
                       {videoComments.map((comment) => (
                         <div key={comment.id} className="flex gap-2">
                           <div className="h-6 w-6 mt-0.5 rounded-full bg-zinc-200 flex items-center justify-center text-[10px] font-semibold text-zinc-600 shrink-0">
-                            {(comment.profiles?.name || "U").charAt(0).toUpperCase()}
+                            {(comment.user?.name || "U").charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <span className="text-xs font-semibold">
-                              {comment.profiles?.name || "Unknown"}
+                              {comment.user?.name || "Unknown"}
                             </span>
                             <span className="text-xs text-zinc-500 ml-1">
                               {comment.text}
