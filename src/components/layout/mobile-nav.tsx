@@ -29,7 +29,6 @@ import {
   Car,
   HeartPulse,
   Shield,
-  Leaf,
   UserPlus,
   Settings,
   Bell,
@@ -67,15 +66,7 @@ export function MobileNav() {
   const pathname = usePathname()
   const router = useRouter()
   const [showMore, setShowMore] = useState(false)
-  const [isUserAdmin, setIsUserAdmin] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    fetch("/api/admin/verify")
-      .then((res) => (res.ok ? res.json() : { isAdmin: false }))
-      .then((data) => setIsUserAdmin(data.isAdmin ?? false))
-      .catch(() => setIsUserAdmin(false))
-  }, [])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -181,16 +172,6 @@ export function MobileNav() {
                 <span className="text-sm text-zinc-500">Dark Mode</span>
                 <DarkModeToggle />
               </div>
-              {isUserAdmin && (
-                <Link
-                  href="/c-panel"
-                  onClick={() => setShowMore(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors"
-                >
-                  <Leaf className="h-4 w-4 text-zinc-400" />
-                  <span className="text-sm text-zinc-700">Admin Panel</span>
-                </Link>
-              )}
             </div>
           )}
         </div>

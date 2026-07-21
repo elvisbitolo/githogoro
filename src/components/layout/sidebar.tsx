@@ -35,7 +35,6 @@ import {
   HeartPulse,
   BookOpen,
   Sparkles,
-  Leaf,
   ClipboardList,
   HandHeart,
   UserPlus,
@@ -54,14 +53,9 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const [isUserAdmin, setIsUserAdmin] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    fetch("/api/admin/verify")
-      .then((res) => (res.ok ? res.json() : { isAdmin: false }))
-      .then((data) => setIsUserAdmin(data.isAdmin ?? false))
-      .catch(() => setIsUserAdmin(false))
     fetch("/api/notifications?unread=true&countOnly=true")
       .then((res) => (res.ok ? res.json() : { count: 0 }))
       .then((data) => setUnreadCount(data.count ?? 0))
@@ -152,15 +146,6 @@ export function Sidebar() {
       </nav>
 
       <div className="p-3 border-t border-zinc-100 dark:border-zinc-800 space-y-1">
-        {isUserAdmin && (
-          <Link
-            href="/c-panel"
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-50 hover:text-zinc-600 transition-colors"
-          >
-            <Leaf className="h-4 w-4" />
-            <span className="text-xs">Admin Panel</span>
-          </Link>
-        )}
         <Link
           href="/settings"
           className={cn(
