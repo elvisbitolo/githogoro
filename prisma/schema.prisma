@@ -396,7 +396,7 @@ model Profile {
 model ChatRoom {
   id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String
-  type        ChatRoomType @default(neighborhood)
+  type        String @default("neighborhood")
   zone        String?
   description String?
   avatarUrl   String?      @map("avatar_url")
@@ -437,7 +437,7 @@ model Job {
   employerName String    @map("employer_name")
   location     String
   salaryRange  String?   @map("salary_range")
-  jobType      JobType   @map("job_type")
+  jobType      String   @map("job_type")
   contactPhone String?   @map("contact_phone")
   postedBy     String?   @map("posted_by") @db.Uuid
   createdBy    String?   @map("created_by") @db.Uuid
@@ -538,7 +538,7 @@ model EventRSVP {
 model CommunityPlace {
   id          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String
-  category    CommunityPlaceCategory
+  category    String
   description String?
   lat         Float
   lng         Float
@@ -907,7 +907,7 @@ model LostFoundItem {
 
 model Alert {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  type      AlertType @default(general)
+  type      String @default("general")
   title     String
   body      String
   createdBy String    @map("created_by") @db.Uuid
