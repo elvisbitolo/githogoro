@@ -18,7 +18,7 @@ export default function InvitePage() {
   const [userName, setUserName] = useState("")
   const supabase = createClient()
 
-  const inviteUrl = "https://githogoro.vercel.app/(auth)/signup"
+  const inviteUrl = "https://githogoro.vercel.app/signup"
   const defaultMessage = "Join Githogoro Connect — the community app for Githogoro residents! Stay connected, find services, and get local updates. Sign up free at"
   const shareText = customMessage || `${defaultMessage} ${inviteUrl}`
 

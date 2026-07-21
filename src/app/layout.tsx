@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { LanguageProvider } from "@/lib/i18n/context"
+import { ThemeProvider } from "@/components/theme-provider"
+import { ToastProvider } from "@/components/toast-provider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -161,10 +163,14 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-dvh bg-[#FAF9F6] text-zinc-900 font-sans">
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+      <body className="min-h-dvh bg-[#FAF9F6] text-zinc-900 font-sans dark:bg-zinc-950 dark:text-zinc-100">
+        <ThemeProvider>
+          <ToastProvider>
+            <LanguageProvider>
+              {children}
+            </LanguageProvider>
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

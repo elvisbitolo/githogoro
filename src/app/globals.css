@@ -23,3 +23,142 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Dark mode support */
+.dark body {
+  background: #09090b;
+  color: #fafafa;
+}
+
+.dark .bg-white {
+  background-color: #18181b;
+}
+
+.dark .bg-\[\#FAF9F6\] {
+  background-color: #09090b;
+}
+
+.dark .text-zinc-900 {
+  color: #fafafa;
+}
+
+.dark .text-zinc-800 {
+  color: #f4f4f5;
+}
+
+.dark .border-zinc-100 {
+  border-color: #27272a;
+}
+
+.dark .border-zinc-200 {
+  border-color: #3f3f46;
+}
+
+.dark .bg-zinc-50 {
+  background-color: #18181b;
+}
+
+.dark .bg-zinc-100 {
+  background-color: #27272a;
+}
+
+.dark .hover\:bg-zinc-50:hover {
+  background-color: #18181b;
+}
+
+.dark .hover\:bg-zinc-100:hover {
+  background-color: #27272a;
+}
+
+.dark .hover\:bg-zinc-200:hover {
+  background-color: #3f3f46;
+}
+
+.dark .text-zinc-600 {
+  color: #a1a1aa;
+}
+
+.dark .text-zinc-500 {
+  color: #71717a;
+}
+
+.dark .text-zinc-400 {
+  color: #52525b;
+}
+
+.dark .text-zinc-300 {
+  color: #52525b;
+}
+
+.dark .placeholder\:text-zinc-400::placeholder {
+  color: #52525b;
+}
+
+.dark .ring-offset-white {
+  --tw-ring-offset-color: #09090b;
+}
+
+.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.dark .bg-violet-50 {
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+.dark .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.1);
+}
+
+/* Smooth transitions for dark mode */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Exclude specific elements from transitions */
+button, a, input, textarea, select {
+  transition-property: background-color, border-color, color, box-shadow, opacity;
+}
+
+/* Animate-in for toasts */
+@keyframes slide-in-from-bottom-5 {
+  from {
+    transform: translateY(1.25rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-in {
+  animation: slide-in-from-bottom-5 0.3s ease-out, fade-in 0.3s ease-out;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

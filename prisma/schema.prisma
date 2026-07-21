@@ -4,8 +4,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url        = env("DATABASE_URL")
-  directUrl  = env("DIRECT_URL")
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─── Enums ────────────────────────────────────────────
@@ -246,162 +246,165 @@ enum SkillAvailability {
 // ─── Models ───────────────────────────────────────────
 
 model Profile {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name             String
-  phone            String
+  phone            String      @unique
   zone             String?
-  avatarUrl        String?  @map("avatar_url")
-  coverUrl         String?  @map("cover_url")
+  avatarUrl        String?     @map("avatar_url")
+  coverUrl         String?     @map("cover_url")
   bio              String?
-  dateOfBirth      DateTime? @map("date_of_birth")
+  dateOfBirth      DateTime?   @map("date_of_birth")
   role             ProfileRole @default(resident)
-  reputationScore  Int      @default(0) @map("reputation_score")
-  reputationPoints Int      @default(0) @map("reputation_points")
-  badges           Json     @default("[]")
-  isVerified       Boolean  @default(false) @map("is_verified")
-  createdAt        DateTime @default(now()) @map("created_at")
-  lastSeen         DateTime? @map("last_seen")
-  lastActiveAt     DateTime? @map("last_active_at")
+  reputationScore  Int         @default(0) @map("reputation_score")
+  reputationPoints Int         @default(0) @map("reputation_points")
+  badges           Json        @default("[]")
+  isVerified       Boolean     @default(false) @map("is_verified")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  lastSeen         DateTime?   @map("last_seen")
+  lastActiveAt     DateTime?   @map("last_active_at")
 
   // Chat Relations
-  chatRooms                    ChatRoom[]
-  messages                     Message[]
-  conversationParticipants     ConversationParticipant[]
-  privateMessagesSent          PrivateMessage[]
-  chatParticipants             ChatParticipant[]
-  messageReactions             MessageReaction[]
-  messageReadReceipts          MessageReadReceipt[]
-  userStatuses                 UserStatus[]
-  chatPollVotes                ChatPollVote[]
-  createdChatPolls             ChatPoll[]         @relation("ChatPollCreator")
-  pinnedConversations          PinnedConversation[]
-  chatSearchHistory            ChatSearchHistory[]
-  disappearingSettings         DisappearingMessageSetting[]
-  chatWallpapers               ChatWallpaper[]
+  chatRooms                ChatRoom[]
+  messages                 Message[]
+  conversationParticipants ConversationParticipant[]
+  privateMessagesSent      PrivateMessage[]
+  chatParticipants         ChatParticipant[]
+  messageReactions         MessageReaction[]
+  messageReadReceipts      MessageReadReceipt[]
+  userStatuses             UserStatus[]
+  chatPollVotes            ChatPollVote[]
+  createdChatPolls         ChatPoll[]                   @relation("ChatPollCreator")
+  pinnedConversations      PinnedConversation[]
+  chatSearchHistory        ChatSearchHistory[]
+  disappearingSettings     DisappearingMessageSetting[]
+  chatWallpapers           ChatWallpaper[]
 
   // Other Relations
-  postedJobs                   Job[]              @relation("PostedJobs")
-  createdJobs                  Job[]              @relation("CreatedJobs")
-  createdBusinesses             Business[]         @relation("BusinessCreator")
-  ownedBusinesses               Business[]         @relation("BusinessOwner")
-  businessReviews              BusinessReview[]
-  events                       Event[]
-  eventRSVPs                   EventRSVP[]
-  submittedPlaces              CommunityPlace[]   @relation("SubmittedPlaces")
-  videos                       Video[]
-  videoLikes                   VideoLike[]
-  videoComments                VideoComment[]
-  alerts                       Alert[]
-  alertReads                   AlertRead[]
-  adminActions                 AdminAction[]
-  bundleVotes                  BundleVote[]
-  bundles                      Bundle[]
-  marketplaceItems             MarketplaceItem[]
-  lostFoundItems               LostFoundItem[]
-  reputationLogs               ReputationLog[]
-  sosAlerts                    SOSAlert[]
-  sosResponses                 SOSResponse[]
-  communityPolls               CommunityPoll[]
-  communityPollVotes           CommunityPollVote[]
+  postedJobs         Job[]               @relation("PostedJobs")
+  createdJobs        Job[]               @relation("CreatedJobs")
+  createdBusinesses  Business[]          @relation("BusinessCreator")
+  ownedBusinesses    Business[]          @relation("BusinessOwner")
+  businessReviews    BusinessReview[]
+  events             Event[]
+  eventRSVPs         EventRSVP[]
+  submittedPlaces    CommunityPlace[]    @relation("SubmittedPlaces")
+  videos             Video[]
+  videoLikes         VideoLike[]
+  videoComments      VideoComment[]
+  alerts             Alert[]
+  alertReads         AlertRead[]
+  adminActions       AdminAction[]
+  bundleVotes        BundleVote[]
+  bundles            Bundle[]
+  marketplaceItems   MarketplaceItem[]
+  lostFoundItems     LostFoundItem[]
+  reputationLogs     ReputationLog[]
+  sosAlerts          SOSAlert[]
+  sosResponses       SOSResponse[]
+  communityPolls     CommunityPoll[]
+  communityPollVotes CommunityPollVote[]
 
   // New Social Relations
-  posts                        Post[]
-  postLikes                    PostLike[]
-  postComments                 PostComment[]
-  commentLikes                 CommentLike[]
-  postShares                   PostShare[]
-  following                    Follow[]              @relation("Following")
-  followers                    Follow[]              @relation("Followers")
-  notifications                Notification[]
-  savedPosts                   SavedPost[]
+  posts            Post[]
+  postLikes        PostLike[]
+  postComments     PostComment[]
+  commentLikes     CommentLike[]
+  postShares       PostShare[]
+  following        Follow[]          @relation("Following")
+  followers        Follow[]          @relation("Followers")
+  notifications    Notification[]
+  pushSubscription PushSubscription?
+  savedPosts       SavedPost[]
 
   // Skills
-  skills                       Skill[]
-  skillReviewsReceived         SkillReview[]         @relation("SkillReviewsReceived")
-  skillReviewsGiven            SkillReview[]         @relation("SkillReviewsGiven")
+  skills               Skill[]
+  skillReviewsReceived SkillReview[] @relation("SkillReviewsReceived")
+  skillReviewsGiven    SkillReview[] @relation("SkillReviewsGiven")
 
   // Harambee
-  harambees                    Harambee[]
-  harambeeDonations            HarambeeDonation[]
+  harambees         Harambee[]
+  harambeeDonations HarambeeDonation[]
 
   // Tontine
-  tontineGroupsOwned           TontineGroup[]
-  tontineMemberships           TontineMember[]
-  tontineContributions         TontineContribution[]
+  tontineGroupsOwned   TontineGroup[]
+  tontineMemberships   TontineMember[]
+  tontineContributions TontineContribution[]
 
   // Loans
-  loansGiven                   MicroLoan[]           @relation("LoansGiven")
-  loansTaken                   MicroLoan[]           @relation("LoansTaken")
+  loansGiven MicroLoan[] @relation("LoansGiven")
+  loansTaken MicroLoan[] @relation("LoansTaken")
 
   // Savings
-  savingsMemberships           SavingsChallengeMember[]
+  savingsMemberships SavingsChallengeMember[]
 
   // Group Buy
-  groupPurchases               GroupPurchase[]
-  groupPurchasePledges         GroupPurchasePledge[]
+  groupPurchases       GroupPurchase[]
+  groupPurchasePledges GroupPurchasePledge[]
 
   // Price Watch
-  priceReports                 PriceReport[]
+  priceReports PriceReport[]
 
   // Errands
-  errandsCreated               Errand[]              @relation("ErrandsCreated")
-  errandsAccepted              Errand[]              @relation("ErrandsAccepted")
+  errandsCreated  Errand[] @relation("ErrandsCreated")
+  errandsAccepted Errand[] @relation("ErrandsAccepted")
 
   // Ride Share
-  ridesOffered                 RideShare[]           @relation("RidesOffered")
-  ridesJoined                  RideShare[]           @relation("RidesJoined")
+  ridesOffered RideShare[] @relation("RidesOffered")
+  ridesJoined  RideShare[] @relation("RidesJoined")
 
   // Meal Sharing
-  mealShares                   MealShare[]
+  mealShares MealShare[]
 
   // Tool Lending
-  toolsListed                  ToolListing[]
-  toolBorrows                  ToolBorrow[]
+  toolsListed ToolListing[]
+  toolBorrows ToolBorrow[]
 
   // Safety
-  emergencyContacts            EmergencyContact[]
-  safeRoutes                   SafeRoute[]
-  checkIns                     ChildCheckIn[]
-  missingItems                 MissingPerson[]
+  emergencyContacts EmergencyContact[]
+  safeRoutes        SafeRoute[]
+  checkIns          ChildCheckIn[]
+  missingItems      MissingPerson[]
 
   // Social/Cultural
-  obituaries                   Obituary[]
-  condolences                  Condolence[]
-  talents                      TalentShowcase[]
-  recipes                      Recipe[]
-  photoMemories                PhotoMemory[]
-  petitionsCreated             Petition[]
-  petitionSignatures           PetitionSignature[]
-  parentingPosts               ParentingPost[]
+  obituaries         Obituary[]
+  condolences        Condolence[]
+  talents            TalentShowcase[]
+  recipes            Recipe[]
+  photoMemories      PhotoMemory[]
+  petitionsCreated   Petition[]
+  petitionSignatures PetitionSignature[]
+  parentingPosts     ParentingPost[]
 
   // Health
-  bloodDonor                   BloodDonor?
-  moodCheckins                 MentalHealthCheckIn[]
+  bloodDonor   BloodDonor?
+  moodCheckins MentalHealthCheckIn[]
 
   // Governance
-  communityBudgets             CommunityBudget[]
-  complaints                   Complaint[]
-  complaintComments            ComplaintComment[]
-  meetings                     MeetingMinutes[]
-  volunteerSignups             VolunteerSignup[]
-  volunteerOpportunities       VolunteerOpportunity[]
+  communityBudgets       CommunityBudget[]
+  complaints             Complaint[]
+  complaintComments      ComplaintComment[]
+  meetings               MeetingMinutes[]
+  volunteerSignups       VolunteerSignup[]
+  volunteerOpportunities VolunteerOpportunity[]
 
-
+  @@index([phone])
+  @@index([zone])
+  @@index([role])
   @@map("profiles")
 }
 
 model ChatRoom {
-  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String
-  type        String      @default("neighborhood")
+  type        ChatRoomType @default(neighborhood)
   zone        String?
   description String?
-  avatarUrl   String?     @map("avatar_url")
-  createdBy   String?     @map("created_by") @db.Uuid
-  createdAt   DateTime    @default(now()) @map("created_at")
+  avatarUrl   String?      @map("avatar_url")
+  createdBy   String?      @map("created_by") @db.Uuid
+  createdAt   DateTime     @default(now()) @map("created_at")
 
   // Relations
-  creator      Profile?           @relation(fields: [createdBy], references: [id])
+  creator      Profile?          @relation(fields: [createdBy], references: [id])
   messages     Message[]
   participants ChatParticipant[]
   polls        ChatPoll[]
@@ -410,62 +413,70 @@ model ChatRoom {
 }
 
 model Message {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  roomId      String   @map("room_id") @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  text        String?
-  mediaUrls   Json     @default("[]") @map("media_urls")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId    String   @map("room_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  text      String?
+  mediaUrls Json     @default("[]") @map("media_urls")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  room      ChatRoom         @relation(fields: [roomId], references: [id])
-  user      Profile          @relation(fields: [userId], references: [id])
+  room      ChatRoom          @relation(fields: [roomId], references: [id])
+  user      Profile           @relation(fields: [userId], references: [id])
   reactions MessageReaction[]
 
+  @@index([roomId, createdAt(sort: Desc)])
+  @@index([userId])
   @@map("messages")
 }
 
 model Job {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title         String
-  description   String
-  employerName  String   @map("employer_name")
-  location      String
-  salaryRange   String?  @map("salary_range")
-  jobType       String   @map("job_type")
-  contactPhone  String?  @map("contact_phone")
-  postedBy      String?  @map("posted_by") @db.Uuid
-  createdBy     String?  @map("created_by") @db.Uuid
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
+  description  String
+  employerName String    @map("employer_name")
+  location     String
+  salaryRange  String?   @map("salary_range")
+  jobType      JobType   @map("job_type")
+  contactPhone String?   @map("contact_phone")
+  postedBy     String?   @map("posted_by") @db.Uuid
+  createdBy    String?   @map("created_by") @db.Uuid
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
 
   // Relations
   poster  Profile? @relation("PostedJobs", fields: [postedBy], references: [id])
   creator Profile? @relation("CreatedJobs", fields: [createdBy], references: [id])
 
+  @@index([postedBy])
+  @@index([isActive, createdAt(sort: Desc)])
   @@map("jobs")
 }
 
 model Business {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name         String
   category     String
   description  String?
-  locationLat  Float?   @map("location_lat")
-  locationLng  Float?   @map("location_lng")
+  locationLat  Float?    @map("location_lat")
+  locationLng  Float?    @map("location_lng")
   phone        String
-  openingHours Json?    @map("opening_hours")
-  isFeatured   Boolean  @default(false) @map("is_featured")
-  photos       Json     @default("[]")
-  ownerId      String?  @map("owner_id") @db.Uuid
-  createdBy    String   @map("created_by") @db.Uuid
-  createdAt    DateTime @default(now()) @map("created_at")
+  openingHours Json?     @map("opening_hours")
+  isFeatured   Boolean   @default(false) @map("is_featured")
+  photos       Json      @default("[]")
+  ownerId      String?   @map("owner_id") @db.Uuid
+  createdBy    String    @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
 
   // Relations
-  creator  Profile          @relation("BusinessCreator", fields: [createdBy], references: [id])
-  owner    Profile?         @relation("BusinessOwner", fields: [ownerId], references: [id])
-  reviews  BusinessReview[]
+  creator Profile          @relation("BusinessCreator", fields: [createdBy], references: [id])
+  owner   Profile?         @relation("BusinessOwner", fields: [ownerId], references: [id])
+  reviews BusinessReview[]
 
+  @@index([ownerId])
+  @@index([category])
   @@map("businesses")
 }
 
@@ -486,23 +497,26 @@ model BusinessReview {
 }
 
 model Event {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title         String
-  description   String?
-  date          DateTime @db.Date
-  location      String
-  category      String
-  coverPhoto    String?  @map("cover_photo")
-  maxAttendees  Int?     @map("max_attendees")
-  isFree        Boolean  @default(true) @map("is_free")
-  ticketPrice   Float?   @map("ticket_price")
-  createdBy     String   @map("created_by") @db.Uuid
-  createdAt     DateTime @default(now()) @map("created_at")
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
+  description  String?
+  date         DateTime  @db.Date
+  location     String
+  category     String
+  coverPhoto   String?   @map("cover_photo")
+  maxAttendees Int?      @map("max_attendees")
+  isFree       Boolean   @default(true) @map("is_free")
+  ticketPrice  Float?    @map("ticket_price")
+  createdBy    String    @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
 
   // Relations
-  creator Profile    @relation(fields: [createdBy], references: [id])
+  creator Profile     @relation(fields: [createdBy], references: [id])
   rsvps   EventRSVP[]
 
+  @@index([createdBy])
+  @@index([createdAt(sort: Desc)])
   @@map("events")
 }
 
@@ -514,7 +528,7 @@ model EventRSVP {
   createdAt DateTime        @default(now()) @map("created_at")
 
   // Relations
-  event Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user  Profile @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
@@ -522,18 +536,18 @@ model EventRSVP {
 }
 
 model CommunityPlace {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String
-  category    String
+  category    CommunityPlaceCategory
   description String?
   lat         Float
   lng         Float
   phone       String?
   website     String?
-  submittedBy String?  @map("submitted_by") @db.Uuid
-  isApproved  Boolean  @default(true) @map("is_approved")
-  isOfficial  Boolean  @default(false) @map("is_official")
-  createdAt   DateTime @default(now()) @map("created_at")
+  submittedBy String?                @map("submitted_by") @db.Uuid
+  isApproved  Boolean                @default(true) @map("is_approved")
+  isOfficial  Boolean                @default(false) @map("is_official")
+  createdAt   DateTime               @default(now()) @map("created_at")
 
   // Relations
   submitter Profile? @relation("SubmittedPlaces", fields: [submittedBy], references: [id])
@@ -542,15 +556,15 @@ model CommunityPlace {
 }
 
 model Video {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title        String
-  description  String?
-  url          String
-  thumbnailUrl String?  @map("thumbnail_url")
-  userId       String   @map("user_id") @db.Uuid
-  likesCount   Int      @default(0) @map("likes_count")
-  commentsCount Int     @default(0) @map("comments_count")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  description   String?
+  url           String
+  thumbnailUrl  String?  @map("thumbnail_url")
+  userId        String   @map("user_id") @db.Uuid
+  likesCount    Int      @default(0) @map("likes_count")
+  commentsCount Int      @default(0) @map("comments_count")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   // Relations
   user     Profile        @relation(fields: [userId], references: [id])
@@ -636,25 +650,25 @@ model PinnedConversation {
 }
 
 model PrivateMessage {
-  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  conversationId String        @map("conversation_id") @db.Uuid
-  senderId       String        @map("sender_id") @db.Uuid
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String      @map("conversation_id") @db.Uuid
+  senderId       String      @map("sender_id") @db.Uuid
   text           String?
-  type           MessageType   @default(text)
-  mediaUrl       String?       @map("media_url")
-  replyToId      String?       @map("reply_to_id") @db.Uuid
-  isStarred      Boolean       @default(false) @map("is_starred")
-  isDeleted      Boolean       @default(false) @map("is_deleted")
-  isEdited       Boolean       @default(false) @map("is_edited")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  readAt         DateTime?     @map("read_at")
-  expiresAt      DateTime?     @map("expires_at")
+  type           MessageType @default(text)
+  mediaUrl       String?     @map("media_url")
+  replyToId      String?     @map("reply_to_id") @db.Uuid
+  isStarred      Boolean     @default(false) @map("is_starred")
+  isDeleted      Boolean     @default(false) @map("is_deleted")
+  isEdited       Boolean     @default(false) @map("is_edited")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  readAt         DateTime?   @map("read_at")
+  expiresAt      DateTime?   @map("expires_at")
 
   // Relations
-  conversation Conversation              @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       Profile                   @relation(fields: [senderId], references: [id])
-  replyTo      PrivateMessage?           @relation("MessageReplies", fields: [replyToId], references: [id])
-  replies      PrivateMessage[]          @relation("MessageReplies")
+  conversation Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       Profile              @relation(fields: [senderId], references: [id])
+  replyTo      PrivateMessage?      @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies      PrivateMessage[]     @relation("MessageReplies")
   reactions    MessageReaction[]
   readReceipts MessageReadReceipt[]
 
@@ -662,18 +676,18 @@ model PrivateMessage {
 }
 
 model MessageReaction {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String   @map("user_id") @db.Uuid
-  emoji           String
-  createdAt       DateTime @default(now()) @map("created_at")
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  emoji     String
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Polymorphic: either message (group) or privateMessage (DM)
-  messageId       String?  @map("message_id") @db.Uuid
+  messageId        String? @map("message_id") @db.Uuid
   privateMessageId String? @map("private_message_id") @db.Uuid
 
   // Relations
-  user           Profile        @relation(fields: [userId], references: [id])
-  message        Message?       @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user           Profile         @relation(fields: [userId], references: [id])
+  message        Message?        @relation(fields: [messageId], references: [id], onDelete: Cascade)
   privateMessage PrivateMessage? @relation(fields: [privateMessageId], references: [id], onDelete: Cascade)
 
   @@unique([userId, messageId])
@@ -682,10 +696,10 @@ model MessageReaction {
 }
 
 model MessageReadReceipt {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String   @map("user_id") @db.Uuid
-  readAt          DateTime @default(now()) @map("read_at")
-  privateMessageId String @map("private_message_id") @db.Uuid
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  readAt           DateTime @default(now()) @map("read_at")
+  privateMessageId String   @map("private_message_id") @db.Uuid
 
   // Relations
   user           Profile        @relation(fields: [userId], references: [id])
@@ -696,10 +710,10 @@ model MessageReadReceipt {
 }
 
 model ChatParticipant {
-  roomId    String    @map("room_id") @db.Uuid
-  userId    String    @map("user_id") @db.Uuid
-  joinedAt  DateTime  @default(now()) @map("joined_at")
-  isAdmin   Boolean   @default(false) @map("is_admin")
+  roomId   String   @map("room_id") @db.Uuid
+  userId   String   @map("user_id") @db.Uuid
+  joinedAt DateTime @default(now()) @map("joined_at")
+  isAdmin  Boolean  @default(false) @map("is_admin")
 
   // Relations
   room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
@@ -710,49 +724,51 @@ model ChatParticipant {
 }
 
 model ChatPoll {
-  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  roomId      String     @map("room_id") @db.Uuid
-  question    String
-  options     Json
-  status      PollStatus @default(active)
-  createdBy   String     @map("created_by") @db.Uuid
-  createdAt   DateTime   @default(now()) @map("created_at")
-  endsAt      DateTime?  @map("ends_at")
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId    String     @map("room_id") @db.Uuid
+  question  String
+  options   Json
+  status    PollStatus @default(active)
+  createdBy String     @map("created_by") @db.Uuid
+  createdAt DateTime   @default(now()) @map("created_at")
+  endsAt    DateTime?  @map("ends_at")
 
   // Relations
-  room    ChatRoom        @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  creator Profile         @relation("ChatPollCreator", fields: [createdBy], references: [id])
+  room    ChatRoom       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  creator Profile        @relation("ChatPollCreator", fields: [createdBy], references: [id])
   votes   ChatPollVote[]
 
   @@map("chat_polls")
 }
 
 model ChatPollVote {
-  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  pollId  String   @map("poll_id") @db.Uuid
-  userId  String   @map("user_id") @db.Uuid
-  option  Int
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pollId    String   @map("poll_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  option    Int
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   poll ChatPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  user Profile @relation(fields: [userId], references: [id])
+  user Profile  @relation(fields: [userId], references: [id])
 
   @@unique([pollId, userId])
   @@map("chat_poll_votes")
 }
 
 model UserStatus {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String    @map("user_id") @db.Uuid
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
   content   String
-  mediaUrl  String?   @map("media_url")
-  expiresAt DateTime  @map("expires_at")
-  createdAt DateTime  @default(now()) @map("created_at")
+  mediaUrl  String?  @map("media_url")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
 
+  @@index([userId])
+  @@index([expiresAt])
   @@map("user_statuses")
 }
 
@@ -816,6 +832,7 @@ model Bundle {
   downvotes   Int            @default(0)
   createdBy   String         @map("created_by") @db.Uuid
   createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime?      @updatedAt @map("updated_at")
 
   // Relations
   creator Profile      @relation(fields: [createdBy], references: [id])
@@ -825,14 +842,15 @@ model Bundle {
 }
 
 model BundleVote {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  bundleId  String   @map("bundle_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bundleId  String    @map("bundle_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
   type      String
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
   // Relations
-  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  bundle Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
   user   Profile @relation(fields: [userId], references: [id])
 
   @@unique([bundleId, userId])
@@ -852,10 +870,13 @@ model MarketplaceItem {
   status      MarketplaceItemStatus @default(available)
   sellerId    String                @map("seller_id") @db.Uuid
   createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime?             @updatedAt @map("updated_at")
 
   // Relations
   seller Profile @relation(fields: [sellerId], references: [id])
 
+  @@index([sellerId])
+  @@index([category, status])
   @@map("marketplace_items")
 }
 
@@ -872,38 +893,44 @@ model LostFoundItem {
   status      LostFoundStatus @default(active)
   userId      String          @map("user_id") @db.Uuid
   createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime?       @updatedAt @map("updated_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
 
+  @@index([userId])
+  @@index([status, type])
   @@map("lost_found_items")
 }
 
 // ─── Alerts ───────────────────────────────────────────
 
 model Alert {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  type      String   @default("general")
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      AlertType @default(general)
   title     String
   body      String
-  createdBy String   @map("created_by") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String    @map("created_by") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
   // Relations
-  creator Profile    @relation(fields: [createdBy], references: [id])
+  creator Profile     @relation(fields: [createdBy], references: [id])
   reads   AlertRead[]
 
+  @@index([createdBy])
+  @@index([type, createdAt(sort: Desc)])
   @@map("alerts")
 }
 
 model AlertRead {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  alertId   String   @map("alert_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  readAt    DateTime @default(now()) @map("read_at")
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  alertId String   @map("alert_id") @db.Uuid
+  userId  String   @map("user_id") @db.Uuid
+  readAt  DateTime @default(now()) @map("read_at")
 
   // Relations
-  alert Alert  @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  alert Alert   @relation(fields: [alertId], references: [id], onDelete: Cascade)
   user  Profile @relation(fields: [userId], references: [id])
 
   @@unique([alertId, userId])
@@ -913,34 +940,38 @@ model AlertRead {
 // ─── Reputation ───────────────────────────────────────
 
 model ReputationLog {
-  id          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String             @map("user_id") @db.Uuid
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String           @map("user_id") @db.Uuid
   action      ReputationAction
   points      Int
   description String?
-  createdAt   DateTime           @default(now()) @map("created_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
 
+  @@index([userId, createdAt(sort: Desc)])
   @@map("reputation_logs")
 }
 
 // ─── Emergency SOS ────────────────────────────────────
 
 model SOSAlert {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
   latitude  Float?
   longitude Float?
   message   String?
-  status    String   @default("active")
-  createdAt DateTime @default(now()) @map("created_at")
+  status    String    @default("active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
   // Relations
-  user      Profile      @relation(fields: [userId], references: [id])
+  user      Profile       @relation(fields: [userId], references: [id])
   responses SOSResponse[]
 
+  @@index([userId])
+  @@index([status])
   @@map("sos_alerts")
 }
 
@@ -961,17 +992,21 @@ model SOSResponse {
 // ─── Community Polls ──────────────────────────────────
 
 model CommunityPoll {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   question  String
   options   Json
-  createdBy String   @map("created_by") @db.Uuid
-  endsAt    DateTime? @map("ends_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String     @map("created_by") @db.Uuid
+  status    PollStatus @default(active)
+  endsAt    DateTime?  @map("ends_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime?  @updatedAt @map("updated_at")
 
   // Relations
-  creator Profile            @relation(fields: [createdBy], references: [id])
+  creator Profile             @relation(fields: [createdBy], references: [id])
   votes   CommunityPollVote[]
 
+  @@index([createdBy])
+  @@index([status])
   @@map("community_polls")
 }
 
@@ -1012,18 +1047,18 @@ model AdminAction {
 // ═══════════════════════════════════════════════════════════
 
 model Post {
-  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String      @map("user_id") @db.Uuid
-  content     String?
-  mediaUrls   Json        @default("[]") @map("media_urls")
-  location    String?
-  privacy     PostPrivacy @default(public)
-  likesCount  Int         @default(0) @map("likes_count")
-  commentsCount Int       @default(0) @map("comments_count")
-  sharesCount Int         @default(0) @map("shares_count")
-  isEdited    Boolean     @default(false) @map("is_edited")
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  content       String?
+  mediaUrls     Json        @default("[]") @map("media_urls")
+  location      String?
+  privacy       PostPrivacy @default(public)
+  likesCount    Int         @default(0) @map("likes_count")
+  commentsCount Int         @default(0) @map("comments_count")
+  sharesCount   Int         @default(0) @map("shares_count")
+  isEdited      Boolean     @default(false) @map("is_edited")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
 
   // Relations
   user     Profile       @relation(fields: [userId], references: [id])
@@ -1052,18 +1087,18 @@ model PostLike {
 }
 
 model PostComment {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  postId    String   @map("post_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  text      String
-  likesCount Int     @default(0) @map("likes_count")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId     String   @map("post_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  text       String
+  likesCount Int      @default(0) @map("likes_count")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   // Relations
-  post   Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user   Profile @relation(fields: [userId], references: [id])
-  likes  CommentLike[]
+  post  Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user  Profile       @relation(fields: [userId], references: [id])
+  likes CommentLike[]
 
   @@index([postId, createdAt(sort: Desc)])
   @@map("post_comments")
@@ -1127,22 +1162,24 @@ model Follow {
 }
 
 model Notification {
-  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String           @map("user_id") @db.Uuid
-  type      NotificationType
-  title     String
-  body      String?
-  link      String?
-  isRead    Boolean          @default(false) @map("is_read")
-  fromUserId String?         @map("from_user_id") @db.Uuid
-  entityId  String?          @map("entity_id") @db.Uuid
-  entityType String?         @map("entity_type")
-  createdAt DateTime         @default(now()) @map("created_at")
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String           @map("user_id") @db.Uuid
+  type       NotificationType
+  title      String
+  body       String?
+  link       String?
+  isRead     Boolean          @default(false) @map("is_read")
+  fromUserId String?          @map("from_user_id") @db.Uuid
+  entityId   String?          @map("entity_id") @db.Uuid
+  entityType String?          @map("entity_type")
+  createdAt  DateTime         @default(now()) @map("created_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
 
   @@index([userId, isRead, createdAt(sort: Desc)])
+  @@index([fromUserId])
+  @@index([entityType, entityId])
   @@map("notifications")
 }
 
@@ -1151,17 +1188,18 @@ model Notification {
 // ═══════════════════════════════════════════════════════════
 
 model Skill {
-  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String            @map("user_id") @db.Uuid
-  title       String
-  description String?
-  category    String
-  priceRange  String?           @map("price_range")
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String            @map("user_id") @db.Uuid
+  title        String
+  description  String?
+  category     String
+  priceRange   String?           @map("price_range")
   availability SkillAvailability @default(available)
-  rating      Float             @default(0)
-  reviewCount Int               @default(0) @map("review_count")
-  photos      Json              @default("[]")
-  createdAt   DateTime          @default(now()) @map("created_at")
+  rating       Float             @default(0)
+  reviewCount  Int               @default(0) @map("review_count")
+  photos       Json              @default("[]")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime?         @updatedAt @map("updated_at")
 
   // Relations
   user    Profile       @relation(fields: [userId], references: [id])
@@ -1194,22 +1232,22 @@ model SkillReview {
 // ═══════════════════════════════════════════════════════════
 
 model Harambee {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creatorId   String           @map("creator_id") @db.Uuid
-  title       String
-  description String?
-  goalAmount  Float            @map("goal_amount")
-  raisedAmount Float           @default(0) @map("raised_amount")
-  status      FundraiserStatus @default(active)
-  photos      Json             @default("[]")
-  category    String           @default("general")
-  isVerified  Boolean          @default(false) @map("is_verified")
-  endsAt      DateTime?        @map("ends_at")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creatorId    String           @map("creator_id") @db.Uuid
+  title        String
+  description  String?
+  goalAmount   Float            @map("goal_amount")
+  raisedAmount Float            @default(0) @map("raised_amount")
+  status       FundraiserStatus @default(active)
+  photos       Json             @default("[]")
+  category     String           @default("general")
+  isVerified   Boolean          @default(false) @map("is_verified")
+  endsAt       DateTime?        @map("ends_at")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
 
   // Relations
-  creator   Profile          @relation(fields: [creatorId], references: [id])
+  creator   Profile            @relation(fields: [creatorId], references: [id])
   donations HarambeeDonation[]
 
   @@index([status, createdAt(sort: Desc)])
@@ -1237,33 +1275,36 @@ model HarambeeDonation {
 // ═══════════════════════════════════════════════════════════
 
 model TontineGroup {
-  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creatorId     String        @map("creator_id") @db.Uuid
-  name          String
-  description   String?
-  contributionAmount Float    @map("contribution_amount")
-  frequency     String        @default("weekly")
-  maxMembers    Int           @map("max_members") @default(20)
-  currentCycle  Int           @default(0) @map("current_cycle")
-  totalCycles   Int           @default(0) @map("total_cycles")
-  status        TontineStatus @default(active)
-  createdAt     DateTime      @default(now()) @map("created_at")
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creatorId          String        @map("creator_id") @db.Uuid
+  name               String
+  description        String?
+  contributionAmount Float         @map("contribution_amount")
+  frequency          String        @default("weekly")
+  maxMembers         Int           @default(20) @map("max_members")
+  currentCycle       Int           @default(0) @map("current_cycle")
+  totalCycles        Int           @default(0) @map("total_cycles")
+  status             TontineStatus @default(active)
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime?     @updatedAt @map("updated_at")
 
   // Relations
-  creator       Profile              @relation(fields: [creatorId], references: [id])
+  creator       Profile               @relation(fields: [creatorId], references: [id])
   members       TontineMember[]
   contributions TontineContribution[]
 
+  @@index([creatorId])
+  @@index([status])
   @@map("tontine_groups")
 }
 
 model TontineMember {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  groupId   String   @map("group_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  position  Int
-  hasReceived Boolean @default(false) @map("has_received")
-  joinedAt  DateTime @default(now()) @map("joined_at")
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId     String   @map("group_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  position    Int
+  hasReceived Boolean  @default(false) @map("has_received")
+  joinedAt    DateTime @default(now()) @map("joined_at")
 
   // Relations
   group TontineGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -1274,14 +1315,14 @@ model TontineMember {
 }
 
 model TontineContribution {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  groupId   String   @map("group_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId   String    @map("group_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
   cycle     Int
   amount    Float
-  isPaid    Boolean  @default(false) @map("is_paid")
+  isPaid    Boolean   @default(false) @map("is_paid")
   paidAt    DateTime? @map("paid_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   // Relations
   group TontineGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -1296,21 +1337,25 @@ model TontineContribution {
 // ═══════════════════════════════════════════════════════════
 
 model MicroLoan {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  lenderId     String    @map("lender_id") @db.Uuid
-  borrowerId   String    @map("borrower_id") @db.Uuid
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lenderId     String     @map("lender_id") @db.Uuid
+  borrowerId   String     @map("borrower_id") @db.Uuid
   amount       Float
-  interestRate Float?    @map("interest_rate")
+  interestRate Float?     @map("interest_rate")
   description  String?
   status       LoanStatus @default(pending)
-  dueDate      DateTime? @map("due_date")
-  repaidAt     DateTime? @map("repaid_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
+  dueDate      DateTime?  @map("due_date")
+  repaidAt     DateTime?  @map("repaid_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime?  @updatedAt @map("updated_at")
 
   // Relations
   lender   Profile @relation("LoansGiven", fields: [lenderId], references: [id])
   borrower Profile @relation("LoansTaken", fields: [borrowerId], references: [id])
 
+  @@index([lenderId])
+  @@index([borrowerId])
+  @@index([status])
   @@map("micro_loans")
 }
 
@@ -1319,16 +1364,16 @@ model MicroLoan {
 // ═══════════════════════════════════════════════════════════
 
 model SavingsChallenge {
-  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title       String
-  description String?
-  targetAmount Float     @map("target_amount")
-  duration    String
-  startDate   DateTime   @map("start_date")
-  endDate     DateTime   @map("end_date")
-  createdAt   DateTime   @default(now()) @map("created_at")
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
+  description  String?
+  targetAmount Float    @map("target_amount")
+  duration     String
+  startDate    DateTime @map("start_date")
+  endDate      DateTime @map("end_date")
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  members     SavingsChallengeMember[]
+  members SavingsChallengeMember[]
 
   @@map("savings_challenges")
 }
@@ -1353,20 +1398,20 @@ model SavingsChallengeMember {
 // ═══════════════════════════════════════════════════════════
 
 model GroupPurchase {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creatorId   String   @map("creator_id") @db.Uuid
-  title       String
-  description String?
-  product     String
-  targetPledge Float   @map("target_pledge")
-  currentPledge Float  @default(0) @map("current_pledge")
-  minPledge   Float    @map("min_pledge")
-  deadline    DateTime?
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creatorId     String    @map("creator_id") @db.Uuid
+  title         String
+  description   String?
+  product       String
+  targetPledge  Float     @map("target_pledge")
+  currentPledge Float     @default(0) @map("current_pledge")
+  minPledge     Float     @map("min_pledge")
+  deadline      DateTime?
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
 
   // Relations
-  creator Profile              @relation(fields: [creatorId], references: [id])
+  creator Profile               @relation(fields: [creatorId], references: [id])
   pledges GroupPurchasePledge[]
 
   @@map("group_purchases")
@@ -1414,23 +1459,26 @@ model PriceReport {
 // ═══════════════════════════════════════════════════════════
 
 model Errand {
-  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creatorId    String       @map("creator_id") @db.Uuid
-  accepterId   String?      @map("accepter_id") @db.Uuid
-  title        String
-  description  String?
-  pickupLocation  String    @map("pickup_location")
-  dropoffLocation String?   @map("dropoff_location")
-  tip          Float?
-  status       ErrandStatus @default(open)
-  dueDate      DateTime?    @map("due_date")
-  completedAt  DateTime?    @map("completed_at")
-  createdAt    DateTime     @default(now()) @map("created_at")
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creatorId       String       @map("creator_id") @db.Uuid
+  accepterId      String?      @map("accepter_id") @db.Uuid
+  title           String
+  description     String?
+  pickupLocation  String       @map("pickup_location")
+  dropoffLocation String?      @map("dropoff_location")
+  tip             Float?
+  status          ErrandStatus @default(open)
+  dueDate         DateTime?    @map("due_date")
+  completedAt     DateTime?    @map("completed_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime?    @updatedAt @map("updated_at")
 
   // Relations
-  creator  Profile @relation("ErrandsCreated", fields: [creatorId], references: [id])
+  creator  Profile  @relation("ErrandsCreated", fields: [creatorId], references: [id])
   accepter Profile? @relation("ErrandsAccepted", fields: [accepterId], references: [id])
 
+  @@index([creatorId])
+  @@index([status])
   @@map("errands")
 }
 
@@ -1439,22 +1487,25 @@ model Errand {
 // ═══════════════════════════════════════════════════════════
 
 model RideShare {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  driverId     String    @map("driver_id") @db.Uuid
-  riderId      String?   @map("rider_id") @db.Uuid
-  from         String
-  to           String
-  departureTime DateTime @map("departure_time")
-  seats        Int       @default(1)
-  price        Float?
-  status       RideStatus @default(scheduled)
-  description  String?
-  createdAt    DateTime  @default(now()) @map("created_at")
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  driverId      String     @map("driver_id") @db.Uuid
+  riderId       String?    @map("rider_id") @db.Uuid
+  from          String
+  to            String
+  departureTime DateTime   @map("departure_time")
+  seats         Int        @default(1)
+  price         Float?
+  status        RideStatus @default(scheduled)
+  description   String?
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime?  @updatedAt @map("updated_at")
 
   // Relations
-  driver Profile @relation("RidesOffered", fields: [driverId], references: [id])
+  driver Profile  @relation("RidesOffered", fields: [driverId], references: [id])
   rider  Profile? @relation("RidesJoined", fields: [riderId], references: [id])
 
+  @@index([driverId])
+  @@index([status])
   @@map("ride_shares")
 }
 
@@ -1463,16 +1514,16 @@ model RideShare {
 // ═══════════════════════════════════════════════════════════
 
 model MealShare {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  title       String
-  description String?
-  servings    Int      @default(1)
-  location    String?
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  title          String
+  description    String?
+  servings       Int       @default(1)
+  location       String?
   availableUntil DateTime? @map("available_until")
-  photo       String?
-  isClaimed   Boolean  @default(false) @map("is_claimed")
-  createdAt   DateTime @default(now()) @map("created_at")
+  photo          String?
+  isClaimed      Boolean   @default(false) @map("is_claimed")
+  createdAt      DateTime  @default(now()) @map("created_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
@@ -1511,8 +1562,8 @@ model ToolBorrow {
   createdAt  DateTime  @default(now()) @map("created_at")
 
   // Relations
-  tool    ToolListing @relation(fields: [toolId], references: [id], onDelete: Cascade)
-  borrower Profile   @relation(fields: [borrowerId], references: [id])
+  tool     ToolListing @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  borrower Profile     @relation(fields: [borrowerId], references: [id])
 
   @@map("tool_borrows")
 }
@@ -1540,14 +1591,14 @@ model EmergencyContact {
 }
 
 model SafeRoute {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  from        String
-  to          String
-  rating      Int
-  timeOfDay   String   @map("time_of_day")
-  comment     String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  from      String
+  to        String
+  rating    Int
+  timeOfDay String   @map("time_of_day")
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
@@ -1571,17 +1622,17 @@ model ChildCheckIn {
 }
 
 model MissingPerson {
-  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String       @map("user_id") @db.Uuid
-  name        String
-  description String?
-  category    String
-  photo       String?
-  location    String?
-  contactPhone String     @map("contact_phone")
-  status      MissingStatus @default(active)
-  resolvedAt  DateTime?   @map("resolved_at")
-  createdAt   DateTime    @default(now()) @map("created_at")
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String        @map("user_id") @db.Uuid
+  name         String
+  description  String?
+  category     String
+  photo        String?
+  location     String?
+  contactPhone String        @map("contact_phone")
+  status       MissingStatus @default(active)
+  resolvedAt   DateTime?     @map("resolved_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
@@ -1594,16 +1645,16 @@ model MissingPerson {
 // ═══════════════════════════════════════════════════════════
 
 model Obituary {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  name        String
-  description String?
-  funeralDate DateTime? @map("funeral_date")
-  funeralLocation String? @map("funeral_location")
-  fundGoal    Float?   @map("fund_goal")
-  fundRaised  Float    @default(0) @map("fund_raised")
-  photo       String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  name            String
+  description     String?
+  funeralDate     DateTime? @map("funeral_date")
+  funeralLocation String?   @map("funeral_location")
+  fundGoal        Float?    @map("fund_goal")
+  fundRaised      Float     @default(0) @map("fund_raised")
+  photo           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   // Relations
   user        Profile      @relation(fields: [userId], references: [id])
@@ -1624,6 +1675,7 @@ model Condolence {
   obituary Obituary @relation(fields: [obituaryId], references: [id], onDelete: Cascade)
   user     Profile  @relation(fields: [userId], references: [id])
 
+  @@index([userId])
   @@map("condolences")
 }
 
@@ -1644,12 +1696,12 @@ model TalentShowcase {
 }
 
 model ParentingPost {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  title       String
-  content     String
-  category    String
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  content   String
+  category  String
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
@@ -1691,18 +1743,18 @@ model PhotoMemory {
 }
 
 model Petition {
-  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creatorId   String        @map("creator_id") @db.Uuid
-  title       String
-  description String
-  category    String?
-  targetSignatures Int      @map("target_signatures") @default(100)
-  currentSignatures Int     @default(0) @map("current_signatures")
-  status      PetitionStatus @default(active)
-  createdAt   DateTime      @default(now()) @map("created_at")
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creatorId         String         @map("creator_id") @db.Uuid
+  title             String
+  description       String
+  category          String?
+  targetSignatures  Int            @default(100) @map("target_signatures")
+  currentSignatures Int            @default(0) @map("current_signatures")
+  status            PetitionStatus @default(active)
+  createdAt         DateTime       @default(now()) @map("created_at")
 
   // Relations
-  creator   Profile             @relation(fields: [creatorId], references: [id])
+  creator    Profile             @relation(fields: [creatorId], references: [id])
   signatures PetitionSignature[]
 
   @@map("petitions")
@@ -1728,27 +1780,27 @@ model PetitionSignature {
 // ═══════════════════════════════════════════════════════════
 
 model ClinicListing {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String
-  category    String
-  description String?
-  phone       String?
-  location    String?
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String
+  category     String
+  description  String?
+  phone        String?
+  location     String?
   openingHours String?  @map("opening_hours")
-  rating      Float    @default(0)
-  reviewCount Int      @default(0) @map("review_count")
-  createdAt   DateTime @default(now()) @map("created_at")
+  rating       Float    @default(0)
+  reviewCount  Int      @default(0) @map("review_count")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("clinic_listings")
 }
 
 model BloodDonor {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @unique @map("user_id") @db.Uuid
-  bloodType String   @map("blood_type")
-  isWilling Boolean  @default(true) @map("is_willing")
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String    @unique @map("user_id") @db.Uuid
+  bloodType    String    @map("blood_type")
+  isWilling    Boolean   @default(true) @map("is_willing")
   lastDonation DateTime? @map("last_donation")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
@@ -1769,16 +1821,17 @@ model HealthTip {
 }
 
 model MentalHealthCheckIn {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  mood      Int
-  note      String?
-  isAnonymous Boolean @default(false) @map("is_anonymous")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  mood        Int
+  note        String?
+  isAnonymous Boolean  @default(false) @map("is_anonymous")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
 
+  @@index([userId])
   @@map("mental_health_checkins")
 }
 
@@ -1787,14 +1840,15 @@ model MentalHealthCheckIn {
 // ═══════════════════════════════════════════════════════════
 
 model CommunityBudget {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
   title       String
   type        String
   amount      Float
   description String?
-  date        DateTime @db.Date
-  createdAt   DateTime @default(now()) @map("created_at")
+  date        DateTime  @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
 
   // Relations
   user Profile @relation(fields: [userId], references: [id])
@@ -1803,20 +1857,22 @@ model CommunityBudget {
 }
 
 model Complaint {
-  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String         @map("user_id") @db.Uuid
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String          @map("user_id") @db.Uuid
   title       String
   description String
   category    String?
   status      ComplaintStatus @default(open)
-  isAnonymous Boolean        @default(false) @map("is_anonymous")
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
+  isAnonymous Boolean         @default(false) @map("is_anonymous")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
 
   // Relations
   user     Profile            @relation(fields: [userId], references: [id])
   comments ComplaintComment[]
 
+  @@index([userId])
+  @@index([status])
   @@map("complaints")
 }
 
@@ -1846,32 +1902,34 @@ model MeetingMinutes {
   // Relations
   user Profile @relation(fields: [userId], references: [id])
 
+  @@index([userId])
+  @@index([meetingDate])
   @@map("meeting_minutes")
 }
 
 model VolunteerOpportunity {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creatorId   String   @map("creator_id") @db.Uuid
-  title       String
-  description String?
-  date        DateTime?
-  location    String?
-  maxVolunteers Int?   @map("max_volunteers")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creatorId     String    @map("creator_id") @db.Uuid
+  title         String
+  description   String?
+  date          DateTime?
+  location      String?
+  maxVolunteers Int?      @map("max_volunteers")
+  createdAt     DateTime  @default(now()) @map("created_at")
 
   // Relations
-  creator Profile          @relation(fields: [creatorId], references: [id])
+  creator Profile           @relation(fields: [creatorId], references: [id])
   signups VolunteerSignup[]
 
   @@map("volunteer_opportunities")
 }
 
 model VolunteerSignup {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  opportunityId   String   @map("opportunity_id") @db.Uuid
-  userId          String   @map("user_id") @db.Uuid
-  hoursWorked     Float?   @map("hours_worked")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  opportunityId String   @map("opportunity_id") @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  hoursWorked   Float?   @map("hours_worked")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   // Relations
   opportunity VolunteerOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
@@ -1879,4 +1937,17 @@ model VolunteerSignup {
 
   @@unique([opportunityId, userId])
   @@map("volunteer_signups")
+}
+
+model PushSubscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
 }

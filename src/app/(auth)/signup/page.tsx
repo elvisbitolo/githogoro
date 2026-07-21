@@ -1,15 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MessageSquare, ArrowRight, User, Phone, Lock, Eye, EyeOff, AlertCircle } from "lucide-react"
+import { MessageSquare, ArrowRight, User, Phone, Lock, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react"
 import { LanguageToggle } from "@/components/LanguageToggle"
 import { useTranslations } from "@/lib/i18n/context"
 import { ZONES } from "@/lib/constants"
+
+const PHONE_REGEX = /^07\d{8}$/
+
+function getPasswordStrength(password: string): { score: number; label: string; color: string } {
+  let score = 0
+  if (password.length >= 8) score++
+  if (password.length >= 12) score++
+  if (/[A-Z]/.test(password)) score++
+  if (/[a-z]/.test(password)) score++
+  if (/\d/.test(password)) score++
+  if (/[^A-Za-z0-9]/.test(password)) score++
+
+  if (score <= 2) return { score, label: "weak", color: "bg-red-500" }
+  if (score <= 3) return { score, label: "fair", color: "bg-orange-500" }
+  if (score <= 4) return { score, label: "good", color: "bg-amber-500" }
+  return { score, label: "strong", color: "bg-emerald-500" }
+}
 
 export default function SignupPage() {
   const { t } = useTranslations()
@@ -21,27 +38,105 @@ export default function SignupPage() {
   const [zone, setZone] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const router = useRouter()
   const supabase = createClient()
+
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password])
+
+  const strengthLabelMap: Record<string, string> = {
+    weak: t.auth.passwordStrengthWeak,
+    fair: t.auth.passwordStrengthFair,
+    good: t.auth.passwordStrengthGood,
+    strong: t.auth.passwordStrengthStrong,
+  }
+
+  const validatePhone = (value: string): string => {
+    const digitsOnly = value.replace(/\D/g, "")
+    if (!digitsOnly) return ""
+    if (!PHONE_REGEX.test(digitsOnly)) return t.auth.phoneInvalid
+    return ""
+  }
+
+  const validatePassword = (value: string): string => {
+    if (!value) return ""
+    if (value.length < 8) return t.auth.passwordMin
+    if (!/[A-Z]/.test(value) || !/[a-z]/.test(value) || !/\d/.test(value) || !/[^A-Za-z0-9]/.test(value)) {
+      return t.auth.passwordStrong
+    }
+    return ""
+  }
+
+  const handlePhoneChange = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "").slice(0, 10)
+    setPhone(digitsOnly)
+    if (touched.phone) {
+      setFieldErrors((prev) => ({ ...prev, phone: validatePhone(digitsOnly) }))
+    }
+  }
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value)
+    if (touched.password) {
+      setFieldErrors((prev) => ({ ...prev, password: validatePassword(value) }))
+    }
+    if (touched.confirmPassword && confirmPassword) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        confirmPassword: value !== confirmPassword ? t.auth.passwordsNoMatch : "",
+      }))
+    }
+  }
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPassword(value)
+    if (touched.confirmPassword) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        confirmPassword: value !== password ? t.auth.passwordsNoMatch : "",
+      }))
+    }
+  }
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+    const errors: Record<string, string> = {}
+    if (field === "phone") errors.phone = validatePhone(phone)
+    if (field === "password") errors.password = validatePassword(password)
+    if (field === "confirmPassword") {
+      errors.confirmPassword = confirmPassword !== password ? t.auth.passwordsNoMatch : ""
+    }
+    setFieldErrors((prev) => ({ ...prev, ...errors }))
+  }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
 
-    if (password.length < 6) {
-      setError(t.auth.passwordMin)
+    const newTouched: Record<string, boolean> = {
+      name: true, phone: true, password: true, confirmPassword: true, zone: true,
+    }
+    setTouched(newTouched)
+
+    const errors: Record<string, string> = {}
+    if (!name.trim()) errors.name = t.auth.nameRequired
+    errors.phone = validatePhone(phone)
+    errors.password = validatePassword(password)
+    if (!confirmPassword) errors.confirmPassword = t.auth.passwordsNoMatch
+    else if (password !== confirmPassword) errors.confirmPassword = t.auth.passwordsNoMatch
+    if (!zone) errors.zone = ""
+
+    setFieldErrors(errors)
+
+    const hasErrors = Object.values(errors).some((e) => e !== "")
+    if (hasErrors) {
       setLoading(false)
       return
     }
 
-    if (password !== confirmPassword) {
-      setError(t.auth.passwordsNoMatch)
-      setLoading(false)
-      return
-    }
-
-    const formattedPhone = phone.startsWith("0") ? "+254" + phone.slice(1) : phone
+    const formattedPhone = "+254" + phone.slice(1)
     const email = `${formattedPhone}@githogoro.connect`
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -49,7 +144,7 @@ export default function SignupPage() {
       password,
       options: {
         data: {
-          name,
+          name: name.trim(),
           phone: formattedPhone,
           zone,
         },
@@ -62,7 +157,6 @@ export default function SignupPage() {
       return
     }
 
-    // Try to sign in immediately (works when email confirmation is disabled)
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -74,16 +168,17 @@ export default function SignupPage() {
       return
     }
 
-    // Ensure profile exists in the database
     await fetch("/api/profiles/me", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone: formattedPhone, zone }),
+      body: JSON.stringify({ name: name.trim(), phone: formattedPhone, zone }),
     })
 
     router.push("/dashboard")
     router.refresh()
   }
+
+  const hasFieldError = (field: string) => touched[field] && fieldErrors[field]
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-4 bg-gradient-to-b from-emerald-50 to-[#FAF9F6]">
@@ -108,10 +203,16 @@ export default function SignupPage() {
                 placeholder="John Kamau"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="pl-10"
+                onBlur={() => handleBlur("name")}
+                className={`pl-10 ${hasFieldError("name") ? "border-red-400 focus-visible:ring-red-500" : ""}`}
                 required
               />
             </div>
+            {hasFieldError("name") && (
+              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3" /> {fieldErrors.name}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -120,13 +221,25 @@ export default function SignupPage() {
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
               <Input
                 type="tel"
+                inputMode="numeric"
                 placeholder="0712 345 678"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="pl-10"
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                onBlur={() => handleBlur("phone")}
+                className={`pl-10 ${hasFieldError("phone") ? "border-red-400 focus-visible:ring-red-500" : ""}`}
+                maxLength={10}
                 required
               />
+              {!hasFieldError("phone") && phone.length === 10 && (
+                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+              )}
             </div>
+            <p className="text-[11px] text-zinc-400">e.g. 0712345678 (10 digits)</p>
+            {hasFieldError("phone") && (
+              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3" /> {fieldErrors.phone}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -135,10 +248,11 @@ export default function SignupPage() {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
               <Input
                 type={showPassword ? "text" : "password"}
-                placeholder="Min 6 characters"
+                placeholder="Min 8 characters"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
+                onChange={(e) => handlePasswordChange(e.target.value)}
+                onBlur={() => handleBlur("password")}
+                className={`pl-10 pr-10 ${hasFieldError("password") ? "border-red-400 focus-visible:ring-red-500" : ""}`}
                 required
               />
               <button
@@ -149,6 +263,34 @@ export default function SignupPage() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            {password.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className={`h-1 flex-1 rounded-full transition-colors ${
+                        i <= Math.ceil(passwordStrength.score / 1.5)
+                          ? passwordStrength.color
+                          : "bg-zinc-200"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className={`text-[11px] ${
+                  passwordStrength.label === "strong" ? "text-emerald-600" :
+                  passwordStrength.label === "good" ? "text-amber-600" :
+                  "text-zinc-500"
+                }`}>
+                  {strengthLabelMap[passwordStrength.label]}
+                </p>
+              </div>
+            )}
+            {hasFieldError("password") && (
+              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3" /> {fieldErrors.password}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -159,11 +301,20 @@ export default function SignupPage() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Repeat password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="pl-10"
+                onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                onBlur={() => handleBlur("confirmPassword")}
+                className={`pl-10 ${hasFieldError("confirmPassword") ? "border-red-400 focus-visible:ring-red-500" : ""}`}
                 required
               />
+              {!hasFieldError("confirmPassword") && confirmPassword && confirmPassword === password && (
+                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+              )}
             </div>
+            {hasFieldError("confirmPassword") && (
+              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3" /> {fieldErrors.confirmPassword}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Users, Search, MapPin, Phone, Calendar, MessageCircle, Briefcase, Shield, Star, Filter } from "lucide-react"
+import { Users, Search, MapPin, Phone, Calendar, MessageCircle, Briefcase, Shield, Star, Filter, MessageSquare, UserPlus, Clock } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -116,6 +116,27 @@ export default function PeoplePage() {
           )}
         </p>
       </div>
+
+      {/* Invite Prompt (when few members) */}
+      {profiles.length < 10 && !loading && (
+        <Card className="mb-6 border-2 border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+              <UserPlus className="h-5 w-5 text-violet-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-zinc-900">Grow the community!</p>
+              <p className="text-xs text-zinc-500">Only {profiles.length} members so far. Invite your neighbors to join Githogoro Connect.</p>
+            </div>
+            <Link
+              href="/invite"
+              className="shrink-0 inline-flex items-center justify-center rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+            >
+              Invite
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
@@ -259,6 +280,11 @@ export default function PeoplePage() {
                             </svg>
                           </span>
                         )}
+                        {profile.createdAt && (Date.now() - new Date(profile.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000 && (
+                          <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0 font-medium">
+                            New
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {profile.role === "admin" && (
@@ -318,12 +344,23 @@ export default function PeoplePage() {
                       Message
                     </Link>
                     {profile.phone && (
-                      <a
-                        href={`tel:${profile.phone}`}
-                        className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
-                      >
-                        <Phone className="h-4 w-4" />
-                      </a>
+                      <>
+                        <a
+                          href={`https://wa.me/${profile.phone.replace("+", "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
+                          title="WhatsApp"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </a>
+                        <a
+                          href={`tel:${profile.phone}`}
+                          className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+                        >
+                          <Phone className="h-4 w-4" />
+                        </a>
+                      </>
                     )}
                   </div>
                 </CardContent>

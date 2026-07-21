@@ -10,6 +10,8 @@ import { Phone, Lock, ArrowRight, MessageSquare, Eye, EyeOff, AlertCircle } from
 import { LanguageToggle } from "@/components/LanguageToggle"
 import { useTranslations } from "@/lib/i18n/context"
 
+const PHONE_REGEX = /^07\d{8}$/
+
 export default function LoginPage() {
   const { t } = useTranslations()
   const [phone, setPhone] = useState("")
@@ -17,15 +19,40 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [phoneError, setPhoneError] = useState("")
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const router = useRouter()
   const supabase = createClient()
+
+  const validatePhone = (value: string): string => {
+    if (!value) return ""
+    if (!PHONE_REGEX.test(value)) return t.auth.phoneInvalid
+    return ""
+  }
+
+  const handlePhoneChange = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "").slice(0, 10)
+    setPhone(digitsOnly)
+    if (touched.phone) {
+      setPhoneError(validatePhone(digitsOnly))
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
 
-    const formattedPhone = phone.startsWith("0") ? "+254" + phone.slice(1) : phone
+    setTouched({ phone: true, password: true })
+    const phoneErr = validatePhone(phone)
+    setPhoneError(phoneErr)
+
+    if (phoneErr) {
+      setLoading(false)
+      return
+    }
+
+    const formattedPhone = "+254" + phone.slice(1)
     const email = `${formattedPhone}@githogoro.connect`
 
     const { error: loginError } = await supabase.auth.signInWithPassword({
@@ -66,13 +93,21 @@ export default function LoginPage() {
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
               <Input
                 type="tel"
+                inputMode="numeric"
                 placeholder="0712 345 678"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="pl-10"
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                onBlur={() => { setTouched((p) => ({ ...p, phone: true })); setPhoneError(validatePhone(phone)) }}
+                className={`pl-10 ${phoneError ? "border-red-400 focus-visible:ring-red-500" : ""}`}
+                maxLength={10}
                 required
               />
             </div>
+            {phoneError && (
+              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3" /> {phoneError}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

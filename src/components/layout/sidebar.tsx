@@ -36,29 +36,37 @@ import {
   BookOpen,
   Sparkles,
   Leaf,
-  Stethoscope,
   ClipboardList,
   HandHeart,
   UserPlus,
+  Settings,
+  Bell,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { LanguageToggle } from "@/components/LanguageToggle"
 import { useTranslations } from "@/lib/i18n/context"
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react"
+import { DarkModeToggle } from "@/components/dark-mode-toggle"
 
 export function Sidebar() {
   const { t } = useTranslations()
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const [showAdminDialog, setShowAdminDialog] = useState(false)
-  const [adminKey, setAdminKey] = useState("")
-  const [adminError, setAdminError] = useState("")
-  const [adminAttempts, setAdminAttempts] = useState(0)
+  const [isUserAdmin, setIsUserAdmin] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    fetch("/api/admin/verify")
+      .then((res) => (res.ok ? res.json() : { isAdmin: false }))
+      .then((data) => setIsUserAdmin(data.isAdmin ?? false))
+      .catch(() => setIsUserAdmin(false))
+    fetch("/api/notifications?unread=true&countOnly=true")
+      .then((res) => (res.ok ? res.json() : { count: 0 }))
+      .then((data) => setUnreadCount(data.count ?? 0))
+      .catch(() => setUnreadCount(0))
+  }, [])
 
   const navItems = [
     { href: "/feed", label: "Feed", icon: Newspaper },
@@ -97,6 +105,7 @@ export function Sidebar() {
     { href: "/governance", label: "Governance", icon: Shield },
     { href: "/partners", label: "Partners", icon: HeartHandshake },
     { href: "/invite", label: "Invite Friends", icon: UserPlus },
+    { href: "/services", label: "Services", icon: Wrench },
     { href: "/profile", label: t.nav.profile, icon: User },
   ]
 
@@ -106,33 +115,19 @@ export function Sidebar() {
     router.refresh()
   }
 
-  const handleAdminKey = () => {
-    if (adminAttempts >= 5) {
-      setAdminError("Too many attempts. Try again later.")
-      return
-    }
-    if (adminKey === "caroline") {
-      setShowAdminDialog(false)
-      setAdminKey("")
-      setAdminError("")
-      router.push("/c-panel")
-    } else {
-      setAdminAttempts((a) => a + 1)
-      setAdminError("Invalid key")
-      setAdminKey("")
-    }
-  }
-
   return (
-    <aside className="hidden lg:flex lg:flex-col lg:w-64 border-r border-zinc-100 bg-white h-dvh sticky top-0">
-      <div className="flex items-center justify-between px-6 h-16 border-b border-zinc-100">
+    <aside className="hidden lg:flex lg:flex-col lg:w-64 border-r border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 h-dvh sticky top-0">
+      <div className="flex items-center justify-between px-6 h-16 border-b border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-emerald-700 flex items-center justify-center">
             <MessageSquare className="h-4 w-4 text-white" />
           </div>
           <span className="font-semibold">{t.site.name}</span>
         </div>
-        <LanguageToggle />
+        <div className="flex items-center gap-1">
+          <LanguageToggle />
+          <DarkModeToggle />
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
@@ -156,14 +151,45 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-3 border-t border-zinc-100 space-y-1">
-        <button
-          onClick={() => setShowAdminDialog(true)}
-          className="flex w-full items-center justify-center gap-1 text-[10px] text-zinc-300 hover:text-zinc-400 transition-colors py-1 select-none"
+      <div className="p-3 border-t border-zinc-100 dark:border-zinc-800 space-y-1">
+        {isUserAdmin && (
+          <Link
+            href="/c-panel"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-50 hover:text-zinc-600 transition-colors"
+          >
+            <Leaf className="h-4 w-4" />
+            <span className="text-xs">Admin Panel</span>
+          </Link>
+        )}
+        <Link
+          href="/settings"
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+            pathname === "/settings"
+              ? "bg-emerald-50 text-emerald-700"
+              : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+          )}
         >
-          <Leaf className="h-3 w-3" />
-          <span className="tracking-widest">✦</span>
-        </button>
+          <Settings className="h-5 w-5" />
+          Settings
+        </Link>
+        <Link
+          href="/notifications"
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors relative",
+            pathname === "/notifications"
+              ? "bg-emerald-50 text-emerald-700"
+              : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+          )}
+        >
+          <Bell className="h-5 w-5" />
+          Notifications
+          {unreadCount > 0 && (
+            <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </Link>
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
@@ -172,27 +198,6 @@ export function Sidebar() {
           {t.nav.signOut}
         </button>
       </div>
-
-      <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>System</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Access key"
-              value={adminKey}
-              onChange={(e) => { setAdminKey(e.target.value); setAdminError("") }}
-              onKeyDown={(e) => e.key === "Enter" && handleAdminKey()}
-            />
-            {adminError && <p className="text-sm text-red-500">{adminError}</p>}
-            <Button onClick={handleAdminKey} className="w-full bg-emerald-700 hover:bg-emerald-800">
-              Access
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </aside>
   )
 }

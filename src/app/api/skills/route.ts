@@ -25,7 +25,7 @@ export async function GET(request: Request) {
       where,
       include: {
         user: {
-          select: { id: true, name: true, avatarUrl: true },
+          select: { id: true, name: true, avatarUrl: true, phone: true, zone: true, isVerified: true },
         },
       },
       orderBy: { createdAt: "desc" },

@@ -31,13 +31,13 @@ import {
   Shield,
   Leaf,
   UserPlus,
+  Settings,
+  Bell,
 } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { useTranslations } from "@/lib/i18n/context"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
+import { DarkModeToggle } from "@/components/dark-mode-toggle"
 
 const moreItems = [
   { href: "/groups", label: "Groups", icon: Users },
@@ -59,6 +59,7 @@ const moreItems = [
   { href: "/health", label: "Health", icon: HeartPulse },
   { href: "/governance", label: "Governance", icon: Shield },
   { href: "/invite", label: "Invite Friends", icon: UserPlus },
+  { href: "/services", label: "Services", icon: Wrench },
 ]
 
 export function MobileNav() {
@@ -66,10 +67,15 @@ export function MobileNav() {
   const pathname = usePathname()
   const router = useRouter()
   const [showMore, setShowMore] = useState(false)
-  const [showAdminDialog, setShowAdminDialog] = useState(false)
-  const [adminKey, setAdminKey] = useState("")
-  const [adminError, setAdminError] = useState("")
+  const [isUserAdmin, setIsUserAdmin] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetch("/api/admin/verify")
+      .then((res) => (res.ok ? res.json() : { isAdmin: false }))
+      .then((data) => setIsUserAdmin(data.isAdmin ?? false))
+      .catch(() => setIsUserAdmin(false))
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -91,7 +97,7 @@ export function MobileNav() {
 
   return (
     <>
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-100 bg-white/90 backdrop-blur-lg safe-area-padding">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-100 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-lg safe-area-padding">
       <div className="flex items-center justify-around h-16 px-1">
         {coreItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
@@ -110,7 +116,6 @@ export function MobileNav() {
           )
         })}
 
-        {/* More button */}
         <div className="relative flex-1" ref={moreRef}>
           <button
             onClick={() => setShowMore(!showMore)}
@@ -123,10 +128,8 @@ export function MobileNav() {
             <span className="text-[10px] font-medium">More</span>
           </button>
 
-          {/* More dropdown */}
           {showMore && (
-            <div className="absolute bottom-full right-0 mb-2 w-56 bg-white rounded-2xl shadow-xl border border-zinc-200 py-2 max-h-[60vh] overflow-y-auto">
-              {/* Profile link at top */}
+            <div className="absolute bottom-full right-0 mb-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 py-2 max-h-[60vh] overflow-y-auto">
               <Link
                 href="/profile"
                 onClick={() => setShowMore(false)}
@@ -157,62 +160,42 @@ export function MobileNav() {
                   </Link>
                 )
               })}
-              {/* Hidden admin trigger */}
               <div className="border-t border-zinc-100 my-1" />
-              <button
-                onClick={() => { setShowMore(false); setShowAdminDialog(true) }}
-                className="flex items-center gap-3 px-4 py-2.5 w-full text-left hover:bg-zinc-50 transition-colors"
+              <Link
+                href="/notifications"
+                onClick={() => setShowMore(false)}
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors"
               >
-                <Leaf className="h-4 w-4 text-zinc-300" />
-                <span className="text-xs text-zinc-300 tracking-widest">✦</span>
-              </button>
+                <Bell className="h-4 w-4 text-zinc-400" />
+                <span className="text-sm text-zinc-700">Notifications</span>
+              </Link>
+              <Link
+                href="/settings"
+                onClick={() => setShowMore(false)}
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors"
+              >
+                <Settings className="h-4 w-4 text-zinc-400" />
+                <span className="text-sm text-zinc-700">Settings</span>
+              </Link>
+              <div className="flex items-center justify-between px-4 py-2">
+                <span className="text-sm text-zinc-500">Dark Mode</span>
+                <DarkModeToggle />
+              </div>
+              {isUserAdmin && (
+                <Link
+                  href="/c-panel"
+                  onClick={() => setShowMore(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors"
+                >
+                  <Leaf className="h-4 w-4 text-zinc-400" />
+                  <span className="text-sm text-zinc-700">Admin Panel</span>
+                </Link>
+              )}
             </div>
           )}
         </div>
       </div>
     </nav>
-
-    <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>System</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Input
-            type="password"
-            placeholder="Access key"
-            value={adminKey}
-            onChange={(e) => { setAdminKey(e.target.value); setAdminError("") }}
-            onKeyDown={(e) => e.key === "Enter" && (() => {
-              if (adminKey === "caroline") {
-                setShowAdminDialog(false)
-                setAdminKey("")
-                router.push("/c-panel")
-              } else {
-                setAdminError("Invalid key")
-                setAdminKey("")
-              }
-            })()}
-          />
-          {adminError && <p className="text-sm text-red-500">{adminError}</p>}
-          <Button
-            onClick={() => {
-              if (adminKey === "caroline") {
-                setShowAdminDialog(false)
-                setAdminKey("")
-                router.push("/c-panel")
-              } else {
-                setAdminError("Invalid key")
-                setAdminKey("")
-              }
-            }}
-            className="w-full bg-emerald-700 hover:bg-emerald-800"
-          >
-            Access
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
     </>
   )
 }
