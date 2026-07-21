@@ -34,13 +34,32 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname.startsWith(p)
     )
 
-  // Admin route protection - require auth (admin check done at page/API level)
+  // Admin route protection - require auth AND admin role
   if (isAdminRoute) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = "/404"
       return NextResponse.rewrite(url)
     }
+
+    // Check admin role via profile
+    const { createClient: createServiceClient } = await import("@supabase/supabase-js")
+    const adminCheckSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
+    const { data: profile } = await adminCheckSupabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+
+    if (!profile || profile.role !== "admin") {
+      const url = request.nextUrl.clone()
+      url.pathname = "/404"
+      return NextResponse.rewrite(url)
+    }
+
     return supabaseResponse
   }
 

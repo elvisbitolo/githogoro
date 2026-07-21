@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-
-const ADMIN_USER_ID = "c98312cd-b4c7-43e4-9336-c5058f3a954e"
 
 export default function AdminLayout({
   children,
@@ -13,18 +10,22 @@ export default function AdminLayout({
 }) {
   const [authorized, setAuthorized] = useState<boolean | null>(null)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || user.id !== ADMIN_USER_ID) {
+      try {
+        const res = await fetch("/api/admin/verify")
+        const data = await res.json()
+        if (data.isAdmin) {
+          setAuthorized(true)
+        } else {
+          router.replace("/")
+        }
+      } catch {
         router.replace("/")
-      } else {
-        setAuthorized(true)
       }
     })()
-  }, [router, supabase])
+  }, [router])
 
   if (authorized === null) {
     return (

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { verifyAdmin } from "@/lib/admin-guard"
 
 export async function GET() {
+  const auth = await verifyAdmin()
+  if ("error" in auth) return auth.error
+
   try {
     const now = new Date()
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
