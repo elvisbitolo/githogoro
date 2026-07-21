@@ -248,7 +248,7 @@ enum SkillAvailability {
 model Profile {
   id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name             String
-  phone            String      @unique
+  phone            String
   zone             String?
   avatarUrl        String?     @map("avatar_url")
   coverUrl         String?     @map("cover_url")
