@@ -69,20 +69,20 @@ export const metadata: Metadata = {
     "Githogoro petitions",
     "githogoroconnect",
   ],
-  authors: [{ name: "Githogoro", url: "https://githogoro.vercel.app" }],
+  authors: [{ name: "Githogoro", url: "https://githogoro.onrender.com" }],
   creator: "Githogoro",
   publisher: "Githogoro",
   openGraph: {
     type: "website",
     locale: "en_KE",
-    url: "https://githogoro.vercel.app",
+    url: "https://githogoro.onrender.com",
     siteName: "Githogoro",
     title: "Githogoro — Community App for Githogoro, Nairobi",
     description:
       "The #1 community app for Githogoro, Nairobi. Chat, jobs, businesses, marketplace, events, and more. Karibu Githogoro!",
     images: [
       {
-        url: "https://githogoro.vercel.app/og-image.png",
+        url: "https://githogoro.onrender.com/og-image.png",
         width: 1200,
         height: 630,
         alt: "Githogoro — Community App for Githogoro, Nairobi",
@@ -94,7 +94,7 @@ export const metadata: Metadata = {
     title: "Githogoro — Community App for Githogoro, Nairobi",
     description:
       "Chat, find jobs, discover businesses, and connect with your neighbors in Githogoro, Nairobi.",
-    images: ["https://githogoro.vercel.app/og-image.png"],
+    images: ["https://githogoro.onrender.com/og-image.png"],
   },
   manifest: "/manifest.json",
   icons: {
@@ -102,10 +102,10 @@ export const metadata: Metadata = {
     apple: "/icons/icon-192x192.png",
   },
   alternates: {
-    canonical: "https://githogoro.vercel.app",
+    canonical: "https://githogoro.onrender.com",
   },
   other: {
-    "google-site-verification": "EO1A_95MmyPuFD2ULeSrZ2xzliMUJEdAWtRmclDUwPo",
+    "google-site-verification": "UKoNzw8c8iMUjQk56NbNTThfaz96V0GMdNM2Fatryz4",
     "application-name": "Githogoro",
     "msapplication-TileColor": "#1B4332",
     "theme-color": "#1B4332",
@@ -128,7 +128,7 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "Githogoro",
-    url: "https://githogoro.vercel.app",
+    url: "https://githogoro.onrender.com",
     description:
       "The #1 community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, join groups, buy & sell in the marketplace, and connect with the Githogoro community.",
     applicationCategory: "SocialNetworkingApplication",
@@ -151,7 +151,7 @@ export default function RootLayout({
     author: {
       "@type": "Organization",
       name: "Githogoro",
-      url: "https://githogoro.vercel.app",
+      url: "https://githogoro.onrender.com",
     },
   }
 
