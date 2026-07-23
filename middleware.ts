@@ -1,50 +1,60 @@
-import { type NextRequest } from "next/server"
+import { type NextRequest, type NextResponse } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
-const rateLimitMap = new Map<string, { count: number; timestamp: number }>()
 const RATE_LIMIT_WINDOW = 60 * 1000
 const RATE_LIMIT_MAX = 100
 
-function rateLimit(ip: string): boolean {
-  const now = Date.now()
-  const record = rateLimitMap.get(ip)
-  if (!record || now - record.timestamp > RATE_LIMIT_WINDOW) {
-    rateLimitMap.set(ip, { count: 1, timestamp: now })
-    return true
-  }
-  record.count++
-  if (record.count > RATE_LIMIT_MAX) {
-    return false
-  }
-  return true
-}
-
-const CLEANUP_INTERVAL = 5 * 60 * 1000
-let lastCleanup = Date.now()
-
-export async function middleware(request: NextRequest) {
-  const now = Date.now()
-  if (now - lastCleanup > CLEANUP_INTERVAL) {
-    for (const [key, value] of rateLimitMap.entries()) {
-      if (now - value.timestamp > RATE_LIMIT_WINDOW) {
-        rateLimitMap.delete(key)
-      }
-    }
-    lastCleanup = now
-  }
-
+function rateLimit(request: NextRequest, response: NextResponse): boolean {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||
     "unknown"
 
-  if (!rateLimit(ip)) {
+  const cookieName = `_rl_${ip.replace(/[.:]/g, "_")}`
+  const cookieVal = request.cookies.get(cookieName)?.value
+
+  let count = 0
+  let windowStart = 0
+
+  if (cookieVal) {
+    const [c, w] = cookieVal.split(":")
+    count = parseInt(c, 10) || 0
+    windowStart = parseInt(w, 10) || 0
+  }
+
+  const now = Date.now()
+  if (!windowStart || now - windowStart > RATE_LIMIT_WINDOW) {
+    count = 1
+    windowStart = now
+  } else {
+    count++
+  }
+
+  if (count > RATE_LIMIT_MAX) {
+    return false
+  }
+
+  response.cookies.set(cookieName, `${count}:${windowStart}`, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60,
+  })
+
+  return true
+}
+
+export async function middleware(request: NextRequest) {
+  const response = await updateSession(request)
+
+  if (!rateLimit(request, response)) {
     return new Response("Too many requests. Please try again later.", {
       status: 429,
       headers: { "Retry-After": "60" },
     })
   }
 
-  return await updateSession(request)
+  return response
 }
 
 export const config = {

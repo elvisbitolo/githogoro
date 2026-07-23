@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -35,7 +35,6 @@ import {
   Check,
   AlertTriangle,
 } from "lucide-react"
-import { useTranslations } from "@/lib/i18n/context"
 import { LanguageToggle } from "@/components/LanguageToggle"
 import { DarkModeToggle } from "@/components/dark-mode-toggle"
 import { useRouter } from "next/navigation"
@@ -185,7 +184,6 @@ function SettingRow({
 }
 
 export default function SettingsPage() {
-  const { t } = useTranslations()
   const router = useRouter()
   const supabase = createClient()
 
@@ -198,8 +196,21 @@ export default function SettingsPage() {
   const [zone, setZone] = useState("")
   const [bio, setBio] = useState("")
 
-  const [notifications, setNotifications] = useState<NotificationPrefs>(DEFAULT_NOTIFICATIONS)
-  const [privacy, setPrivacy] = useState<PrivacyPrefs>(DEFAULT_PRIVACY)
+  const [notifications, setNotifications] = useState<NotificationPrefs>(() => {
+    try {
+      const stored = localStorage.getItem("notificationPrefs")
+      if (stored) return JSON.parse(stored)
+    } catch {}
+    return DEFAULT_NOTIFICATIONS
+  })
+  const [privacy, setPrivacy] = useState<PrivacyPrefs>(() => {
+    try {
+      const stored = localStorage.getItem("privacyPrefs")
+      if (stored) return JSON.parse(stored)
+    } catch {}
+    return DEFAULT_PRIVACY
+  })
+  const initializedRef = useRef(false)
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -224,27 +235,53 @@ export default function SettingsPage() {
             setName(data.name || "")
             setZone(data.zone || "")
             setBio(data.bio || "")
+
+            if (data.settings && !initializedRef.current) {
+              const s = data.settings as Record<string, unknown>
+              if (s.notifications) setNotifications(s.notifications as NotificationPrefs)
+              if (s.privacy) setPrivacy(s.privacy as PrivacyPrefs)
+              initializedRef.current = true
+            }
           }
           setLoading(false)
         })
         .catch(() => setLoading(false))
     })
-
-    try {
-      const stored = localStorage.getItem("notificationPrefs")
-      if (stored) setNotifications(JSON.parse(stored))
-    } catch {}
-
-    try {
-      const stored = localStorage.getItem("privacyPrefs")
-      if (stored) setPrivacy(JSON.parse(stored))
-    } catch {}
   }, [supabase])
 
-  const persistNotifications = useCallback((prefs: NotificationPrefs) => {
+  const persistNotifications = useCallback(async (prefs: NotificationPrefs) => {
     setNotifications(prefs)
     localStorage.setItem("notificationPrefs", JSON.stringify(prefs))
-  }, [])
+
+    if (prefs.pushEnabled) {
+      try {
+        if ("serviceWorker" in navigator && "PushManager" in window) {
+          const permission = await Notification.requestPermission()
+          if (permission === "granted") {
+            const reg = await navigator.serviceWorker.register("/sw.js")
+            const subscription = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: process.env.NEXT_PUBLIC_VAPID_KEY || undefined,
+            })
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+              await fetch("/api/notifications/subscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ subscription: subscription.toJSON(), userId: user.id }),
+              })
+            }
+          } else {
+            setNotifications((prev) => ({ ...prev, pushEnabled: false }))
+            localStorage.setItem("notificationPrefs", JSON.stringify({ ...prefs, pushEnabled: false }))
+          }
+        }
+      } catch {
+        setNotifications((prev) => ({ ...prev, pushEnabled: false }))
+        localStorage.setItem("notificationPrefs", JSON.stringify({ ...prefs, pushEnabled: false }))
+      }
+    }
+  }, [supabase])
 
   const persistPrivacy = useCallback((prefs: PrivacyPrefs) => {
     setPrivacy(prefs)
@@ -258,7 +295,12 @@ export default function SettingsPage() {
       const res = await fetch("/api/profiles/me", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, zone, bio }),
+        body: JSON.stringify({
+          name,
+          zone,
+          bio,
+          settings: { notifications, privacy },
+        }),
       })
       if (res.ok) {
         const updated = await res.json()

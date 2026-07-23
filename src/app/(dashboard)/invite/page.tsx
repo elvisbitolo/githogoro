@@ -19,7 +19,7 @@ export default function InvitePage() {
   const supabase = createClient()
 
   const inviteUrl = "https://githogoro.vercel.app/signup"
-  const defaultMessage = "Join Githogoro Connect — the community app for Githogoro residents! Stay connected, find services, and get local updates. Sign up free at"
+  const defaultMessage = "Join Githogoro — the community app for Githogoro residents! Stay connected, find services, and get local updates. Sign up free at"
   const shareText = customMessage || `${defaultMessage} ${inviteUrl}`
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function InvitePage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join Githogoro Connect",
+          title: "Join Githogoro",
           text: shareText,
           url: inviteUrl,
         })

@@ -1,6 +1,6 @@
-export const SITE_NAME = "Githogoro Connect"
+export const SITE_NAME = "Githogoro"
 export const SITE_DESCRIPTION = "Karibu Githogoro — The Heart of Our Community. Chat, jobs, businesses, events, and everything Githogoro in one place."
-export const SITE_URL = "https://githogoroconnect.com"
+export const SITE_URL = "https://githogoro.vercel.app"
 export const ADMIN_ID_PROCESS = process.env.ADMIN_USER_ID || ""
 export const APP_VERSION = "1.0.0"
 

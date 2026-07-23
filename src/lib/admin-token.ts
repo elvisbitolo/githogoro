@@ -2,7 +2,10 @@ const COOKIE_NAME = "admin_access_token"
 const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000 // 24 hours
 
 async function getKey(): Promise<CryptoKey> {
-  const secret = process.env.ADMIN_ACCESS_KEY || "caroline"
+  const secret = process.env.ADMIN_ACCESS_KEY
+  if (!secret) {
+    throw new Error("ADMIN_ACCESS_KEY environment variable is not set")
+  }
   const encoder = new TextEncoder()
   return crypto.subtle.importKey(
     "raw",

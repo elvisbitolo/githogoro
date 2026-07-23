@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const zone = searchParams.get("zone");
@@ -12,7 +19,6 @@ export async function GET(request: Request) {
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
-        { phone: { contains: search } },
       ];
     }
 
@@ -27,7 +33,6 @@ export async function GET(request: Request) {
       select: {
         id: true,
         name: true,
-        phone: true,
         zone: true,
         avatarUrl: true,
         bio: true,

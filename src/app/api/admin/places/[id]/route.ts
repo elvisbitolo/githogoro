@@ -1,28 +1,12 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { createClient } from "@/lib/supabase/server"
-
-async function verifyAdmin(request: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) }
-
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: { role: true },
-  })
-  if (!profile || profile.role !== "admin") {
-    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) }
-  }
-
-  return { userId: user.id }
-}
+import { verifyAdmin } from "@/lib/admin-guard"
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await verifyAdmin(request)
+  const auth = await verifyAdmin()
   if ("error" in auth) return auth.error
 
   const { id } = await params

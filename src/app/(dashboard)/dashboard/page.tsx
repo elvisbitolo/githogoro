@@ -84,7 +84,7 @@ const DAILY_QUOTES = [
   { text: "If you want to go fast, go alone. If you want to go far, go together.", author: "African Proverb" },
   { text: "None of us is as smart as all of us.", author: "Ken Blanchard" },
   { text: "Coming together is a beginning, staying together is progress, and working together is success.", author: "Henry Ford" },
-  { text: "Tuko pamoja — We are together.", author: "Githogoro Connect" },
+  { text: "Tuko pamoja — We are together.", author: "Githogoro" },
   { text: "Umoja ni nguvu — Unity is strength.", author: "Swahili Proverb" },
 ]
 

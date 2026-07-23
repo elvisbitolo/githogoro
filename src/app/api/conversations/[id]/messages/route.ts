@@ -7,7 +7,21 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
+
+    // Verify user is a participant
+    const participant = await prisma.conversationParticipant.findFirst({
+      where: { conversationId: id, userId: user.id },
+    });
+    if (!participant) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const messages = await prisma.privateMessage.findMany({
       where: { conversationId: id },

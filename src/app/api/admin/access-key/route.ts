@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { signAdminToken, COOKIE_NAME } from "@/lib/admin-token"
+import { timingSafeEqual } from "crypto"
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +16,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Admin access not configured" }, { status: 500 })
     }
 
-    if (key !== adminKey) {
+    const keyBuf = Buffer.from(key)
+    const adminKeyBuf = Buffer.from(adminKey)
+    if (keyBuf.length !== adminKeyBuf.length || !timingSafeEqual(keyBuf, adminKeyBuf)) {
       return NextResponse.json({ error: "Invalid access key" }, { status: 403 })
     }
 

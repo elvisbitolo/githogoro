@@ -31,7 +31,7 @@ export async function updateSession(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname.startsWith("/c-panel")
   const isAuthRoute = request.nextUrl.pathname.startsWith("/login") || request.nextUrl.pathname.startsWith("/signup")
   const isDashboardRoute = request.nextUrl.pathname.startsWith("/dashboard") || 
-    ["/chat", "/jobs", "/map", "/businesses", "/marketplace", "/events", "/profile", "/alerts", "/lost-found", "/videos", "/people", "/messages", "/groups", "/bundles", "/sos", "/polls", "/leaderboard", "/stories", "/feed", "/skills", "/harambee", "/tontine", "/loans", "/savings", "/group-buy", "/prices", "/errands", "/rides", "/meals", "/tools", "/safety", "/obituaries", "/talents", "/recipes", "/petitions", "/parenting", "/memories", "/health", "/governance", "/partners"].some(p => 
+    ["/chat", "/map", "/profile", "/alerts", "/lost-found", "/videos", "/people", "/messages", "/groups", "/bundles", "/sos", "/polls", "/leaderboard", "/stories", "/feed", "/skills", "/harambee", "/tontine", "/loans", "/savings", "/group-buy", "/prices", "/errands", "/rides", "/meals", "/tools", "/safety", "/obituaries", "/talents", "/recipes", "/petitions", "/parenting", "/memories", "/health", "/governance", "/partners"].some(p => 
       request.nextUrl.pathname.startsWith(p)
     )
 

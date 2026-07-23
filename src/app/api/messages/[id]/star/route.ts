@@ -20,6 +20,14 @@ export async function POST(
       return NextResponse.json({ error: "Message not found" }, { status: 404 })
     }
 
+    // Verify user is a participant in the conversation
+    const participant = await prisma.conversationParticipant.findFirst({
+      where: { conversationId: message.conversationId, userId: user.id },
+    })
+    if (!participant) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const updated = await prisma.privateMessage.update({
       where: { id },
       data: { isStarred: !message.isStarred },

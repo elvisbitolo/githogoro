@@ -56,10 +56,10 @@ export default function ObituariesPage() {
     if (!condolenceMsg.trim()) return
     setCondoling(obituaryId)
     try {
-      const res = await fetch("/api/obituaries", {
+      const res = await fetch(`/api/obituaries/${obituaryId}/condolences`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ obituaryId, message: condolenceMsg.trim(), amount: condolenceAmount ? Number(condolenceAmount) : null }),
+        body: JSON.stringify({ message: condolenceMsg.trim(), amount: condolenceAmount ? Number(condolenceAmount) : null }),
       })
       if (res.ok) {
         setCondolenceMsg("")

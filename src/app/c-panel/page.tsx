@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Users, Briefcase, MessageSquare, AlertTriangle, TrendingUp,
-  Shield, Activity, Database, MapPin, Package, Calendar,
-  Radio, CircleDot, X,
+  Shield, Activity, MapPin, Package, Calendar,
+  Clock, Megaphone,
 } from "lucide-react"
 import Link from "next/link"
 import {
@@ -42,6 +42,11 @@ export default function AdminPanelPage() {
   const [alertTitle, setAlertTitle] = useState("")
   const [alertBody, setAlertBody] = useState("")
   const [alertSending, setAlertSending] = useState(false)
+
+  const [announceOpen, setAnnounceOpen] = useState(false)
+  const [announceTitle, setAnnounceTitle] = useState("")
+  const [announceMessage, setAnnounceMessage] = useState("")
+  const [announceSending, setAnnounceSending] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -80,6 +85,22 @@ export default function AdminPanelPage() {
       setAlertBody("")
     } catch { /* ignore */ }
     setAlertSending(false)
+  }
+
+  const handleAnnouncement = async () => {
+    if (!announceTitle.trim() || !announceMessage.trim()) return
+    setAnnounceSending(true)
+    try {
+      await fetch("/api/admin/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: announceTitle, message: announceMessage, type: "general" }),
+      })
+      setAnnounceOpen(false)
+      setAnnounceTitle("")
+      setAnnounceMessage("")
+    } catch { /* ignore */ }
+    setAnnounceSending(false)
   }
 
   const statCards = stats
@@ -152,6 +173,29 @@ export default function AdminPanelPage() {
                 <span className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-amber-400" /> Analytics</span>
                 <span className="text-zinc-500">→</span>
               </Link>
+              <Link href="/c-panel/businesses" className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 text-sm hover:bg-zinc-800 transition-colors">
+                <span className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-purple-400" /> Business Moderation</span>
+                <span className="text-zinc-500">→</span>
+              </Link>
+              <Link href="/c-panel/feed-moderation" className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 text-sm hover:bg-zinc-800 transition-colors">
+                <span className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-blue-400" /> Feed Moderation</span>
+                <span className="text-zinc-500">→</span>
+              </Link>
+              <Link href="/c-panel/content" className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 text-sm hover:bg-zinc-800 transition-colors">
+                <span className="flex items-center gap-2"><Package className="h-4 w-4 text-cyan-400" /> Content Moderation</span>
+                <span className="text-zinc-500">→</span>
+              </Link>
+              <Link href="/c-panel/audit-log" className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 text-sm hover:bg-zinc-800 transition-colors">
+                <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-zinc-400" /> Audit Log</span>
+                <span className="text-zinc-500">→</span>
+              </Link>
+              <button
+                onClick={() => setAnnounceOpen(true)}
+                className="flex w-full items-center justify-between rounded-lg bg-blue-900/30 border border-blue-900/50 px-4 py-3 text-sm hover:bg-blue-900/50 transition-colors"
+              >
+                <span className="flex items-center gap-2"><Megaphone className="h-4 w-4 text-blue-400" /> Send Announcement</span>
+                <span className="text-zinc-500">→</span>
+              </button>
               <button
                 onClick={() => setAlertOpen(true)}
                 className="flex w-full items-center justify-between rounded-lg bg-red-900/30 border border-red-900/50 px-4 py-3 text-sm hover:bg-red-900/50 transition-colors"
@@ -240,6 +284,52 @@ export default function AdminPanelPage() {
                 disabled={alertSending || !alertTitle.trim() || !alertBody.trim()}
               >
                 {alertSending ? "Sending..." : "Broadcast Now"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={announceOpen} onOpenChange={setAnnounceOpen}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-blue-400 flex items-center gap-2">
+              <Megaphone className="h-5 w-5" /> Community Announcement
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-zinc-500">
+              Send a community-wide announcement (non-emergency). All users will see this in their notifications.
+            </p>
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Title</label>
+              <Input
+                value={announceTitle}
+                onChange={(e) => setAnnounceTitle(e.target.value)}
+                placeholder="Announcement title..."
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Message</label>
+              <textarea
+                value={announceMessage}
+                onChange={(e) => setAnnounceMessage(e.target.value)}
+                placeholder="Announcement message..."
+                rows={4}
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setAnnounceOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleAnnouncement}
+                disabled={announceSending || !announceTitle.trim() || !announceMessage.trim()}
+              >
+                {announceSending ? "Sending..." : "Send Announcement"}
               </Button>
             </div>
           </div>

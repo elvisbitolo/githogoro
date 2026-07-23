@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { MessageSquare, Briefcase, MapPin, Store, Video, Calendar, Shield, Smartphone, ChevronRight } from "lucide-react"
@@ -8,8 +9,20 @@ import { useTranslations } from "@/lib/i18n/context"
 
 const icons = { MessageSquare, Briefcase, MapPin, Store, Video, Calendar, Shield }
 
+interface Stats {
+  residents: number
+  jobs: number
+  businesses: number
+  activeUsers: number
+}
+
 export default function LandingPage() {
   const { t } = useTranslations()
+  const [stats, setStats] = useState<Stats>({ residents: 0, jobs: 0, businesses: 0, activeUsers: 0 })
+
+  useEffect(() => {
+    fetch("/api/stats").then((r) => r.json()).then(setStats).catch(() => {})
+  }, [])
 
   const features = [
     { icon: "MessageSquare" as const, title: t.landing.featureChat, desc: t.landing.featureChatDesc },
@@ -20,11 +33,11 @@ export default function LandingPage() {
     { icon: "Shield" as const, title: t.landing.featureAlert, desc: t.landing.featureAlertDesc },
   ]
 
-  const stats = [
-    { label: t.landing.statResidents, value: "2,000+" },
-    { label: t.landing.statJobs, value: "150+" },
-    { label: t.landing.statBiz, value: "80+" },
-    { label: t.landing.statActive, value: "500+" },
+  const statItems = [
+    { label: t.landing.statResidents, value: stats.residents > 0 ? stats.residents.toLocaleString() : "2,000+" },
+    { label: t.landing.statJobs, value: stats.jobs > 0 ? stats.jobs.toLocaleString() : "150+" },
+    { label: t.landing.statBiz, value: stats.businesses > 0 ? stats.businesses.toLocaleString() : "80+" },
+    { label: t.landing.statActive, value: stats.activeUsers > 0 ? stats.activeUsers.toLocaleString() : "500+" },
   ]
 
   return (
@@ -102,7 +115,7 @@ export default function LandingPage() {
         <div className="border-t border-white/10">
           <div className="mx-auto max-w-6xl px-4 py-6">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-              {stats.map((stat) => (
+              {statItems.map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold text-amber-400">{stat.value}</div>
                   <div className="text-sm text-emerald-100/60">{stat.label}</div>

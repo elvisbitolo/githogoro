@@ -262,6 +262,7 @@ model Profile {
   createdAt        DateTime    @default(now()) @map("created_at")
   lastSeen         DateTime?   @map("last_seen")
   lastActiveAt     DateTime?   @map("last_active_at")
+  settings         Json        @default("{}")
 
   // Chat Relations
   chatRooms                ChatRoom[]

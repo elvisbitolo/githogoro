@@ -15,6 +15,19 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Verify the message exists and user is a participant in the conversation
+    const message = await prisma.privateMessage.findUnique({ where: { id } })
+    if (!message) {
+      return NextResponse.json({ error: "Message not found" }, { status: 404 })
+    }
+
+    const participant = await prisma.conversationParticipant.findFirst({
+      where: { conversationId: message.conversationId, userId: user.id },
+    })
+    if (!participant) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const body = await request.json()
     const { emoji } = body
 

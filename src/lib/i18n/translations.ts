@@ -1,6 +1,6 @@
 export const en = {
   site: {
-    name: "Githogoro Connect",
+    name: "Githogoro",
     tagline: "The Heart of Our Community",
   },
   nav: {
@@ -55,9 +55,9 @@ export const en = {
     footer: "Built with ❤️ for the Githogoro community.",
   },
   auth: {
-    joinTitle: "Join Githogoro Connect",
+    joinTitle: "Join Githogoro",
     joinSubtitle: "Create an account to join the community",
-    loginTitle: "Githogoro Connect",
+    loginTitle: "Githogoro",
     loginSubtitle: "Sign in using your phone and password",
     fullName: "Full Name",
     phoneNumber: "Phone Number",
@@ -100,7 +100,7 @@ export const en = {
     loadingJobs: "Loading jobs...",
     communityUpdates: "Community Updates",
     noUpdates: "No recent updates.",
-    onboardingTitle: "Welcome to Githogoro Connect!",
+    onboardingTitle: "Welcome to Githogoro!",
     onboardingDesc: "Start by exploring the community. Post an update, join a chat, or discover local businesses.",
     onboardingChat: "Join Chat",
     onboardingExplore: "Explore Map",
@@ -175,7 +175,7 @@ export const en = {
 
 export const sw: typeof en = {
   site: {
-    name: "Githogoro Connect",
+    name: "Githogoro",
     tagline: "Moyo wa Jamii Yetu",
   },
   nav: {
@@ -230,9 +230,9 @@ export const sw: typeof en = {
     footer: "Imejengwa kwa ❤️ kwa ajili ya jamii ya Githogoro.",
   },
   auth: {
-    joinTitle: "Jiunge na Githogoro Connect",
+    joinTitle: "Jiunge na Githogoro",
     joinSubtitle: "Unda akaunti kujiunga na jamii",
-    loginTitle: "Githogoro Connect",
+    loginTitle: "Githogoro",
     loginSubtitle: "Ingia kutumia nambari na password",
     fullName: "Jina Kamili",
     phoneNumber: "Nambari ya Simu",
@@ -275,7 +275,7 @@ export const sw: typeof en = {
     loadingJobs: "Inapakia kazi...",
     communityUpdates: "Habari za Jamii",
     noUpdates: "Hakuna habari za hivi karibuni.",
-    onboardingTitle: "Karibu Githogoro Connect!",
+    onboardingTitle: "Karibu Githogoro!",
     onboardingDesc: "Anza kuchunguza jamii. Chapisha update, jiunge na mazungumzo, au gundua biashara za ndani.",
     onboardingChat: "Jiunge na Mazungumzo",
     onboardingExplore: "Chunguza Ramani",

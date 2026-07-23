@@ -75,7 +75,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { avatar_url, name, phone, zone, bio, role } = body;
+    const { avatar_url, name, phone, zone, bio, role, settings } = body;
 
     const updateData: Record<string, unknown> = {
       lastActiveAt: new Date(),
@@ -89,6 +89,7 @@ export async function PUT(request: Request) {
     if (role !== undefined && ["resident", "business"].includes(role)) {
       updateData.role = role;
     }
+    if (settings !== undefined) updateData.settings = settings;
 
     const profile = await prisma.profile.upsert({
       where: { id: user.id },

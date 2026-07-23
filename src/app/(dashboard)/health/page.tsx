@@ -4,10 +4,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 import {
   Stethoscope,
-  Lightbulb,
   Droplets,
   Brain,
-  Dumbbell,
 } from "lucide-react"
 
 const healthSections = [
@@ -17,13 +15,6 @@ const healthSections = [
     description: "Find nearby clinics and health centers",
     icon: Stethoscope,
     color: "bg-emerald-50 text-emerald-700",
-  },
-  {
-    href: "/health/tips",
-    label: "Health Tips",
-    description: "Daily health advice from trusted sources",
-    icon: Lightbulb,
-    color: "bg-amber-50 text-amber-700",
   },
   {
     href: "/health/blood-donors",
@@ -38,13 +29,6 @@ const healthSections = [
     description: "Check in with your mood and well-being",
     icon: Brain,
     color: "bg-purple-50 text-purple-700",
-  },
-  {
-    href: "/health/fitness-groups",
-    label: "Fitness Groups",
-    description: "Join community fitness groups and activities",
-    icon: Dumbbell,
-    color: "bg-blue-50 text-blue-700",
   },
 ]
 

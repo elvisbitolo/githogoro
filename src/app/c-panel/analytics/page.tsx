@@ -102,6 +102,91 @@ export default function AdminAnalyticsPage() {
           <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
               <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" /> Content Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const maxVal = Math.max(stats.users, stats.messages, stats.jobs, stats.businesses, stats.events, stats.bundles, stats.places, 1)
+                const bars = [
+                  { label: "Users", value: stats.users, color: "bg-blue-500" },
+                  { label: "Messages", value: stats.messages, color: "bg-emerald-500" },
+                  { label: "Jobs", value: stats.jobs, color: "bg-amber-500" },
+                  { label: "Businesses", value: stats.businesses, color: "bg-purple-500" },
+                  { label: "Events", value: stats.events, color: "bg-cyan-500" },
+                  { label: "Bundles", value: stats.bundles, color: "bg-orange-500" },
+                  { label: "Places", value: stats.places, color: "bg-pink-500" },
+                ]
+                return (
+                  <div className="space-y-3">
+                    {bars.map((bar) => (
+                      <div key={bar.label} className="flex items-center gap-3">
+                        <span className="text-xs text-zinc-500 w-20 shrink-0 text-right">{bar.label}</span>
+                        <div className="flex-1 h-6 bg-zinc-800 rounded overflow-hidden">
+                          <div
+                            className={`h-full ${bar.color} rounded transition-all duration-500`}
+                            style={{ width: `${Math.max((bar.value / maxVal) * 100, bar.value > 0 ? 3 : 0)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-zinc-400 w-12 text-right shrink-0">{bar.value.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                <Activity className="h-4 w-4" /> This Week vs Last Week
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const comparisons = [
+                  { label: "Users", current: stats.recentUsers, previous: Math.max(0, stats.users - stats.recentUsers), color: "text-blue-400" },
+                  { label: "Messages", current: stats.recentMessages, previous: Math.max(0, stats.messages - stats.recentMessages), color: "text-emerald-400" },
+                  { label: "Jobs", current: stats.recentJobs, previous: Math.max(0, stats.jobs - stats.recentJobs), color: "text-amber-400" },
+                  { label: "Businesses", current: stats.recentBusinesses, previous: Math.max(0, stats.businesses - stats.recentBusinesses), color: "text-purple-400" },
+                ]
+                return (
+                  <div className="space-y-4">
+                    {comparisons.map((c) => {
+                      const maxVal = Math.max(c.current, c.previous, 1)
+                      return (
+                        <div key={c.label}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-zinc-500">{c.label}</span>
+                            <span className={`text-xs font-medium ${c.current >= c.previous ? "text-emerald-400" : "text-red-400"}`}>
+                              {c.current >= c.previous ? "+" : ""}{c.previous === 0 ? 100 : Math.round(((c.current - c.previous) / Math.max(c.previous, 1)) * 100)}%
+                            </span>
+                          </div>
+                          <div className="flex gap-1 items-end h-8">
+                            <div className="flex-1 flex flex-col items-center">
+                              <div className="w-full bg-zinc-800 rounded-t" style={{ height: `${Math.max((c.previous / maxVal) * 28, 2)}px` }} />
+                              <span className="text-[9px] text-zinc-600 mt-0.5">Prev</span>
+                            </div>
+                            <div className="flex-1 flex flex-col items-center">
+                              <div className={`w-full ${c.color.replace("text-", "bg-").replace("-400", "-500/50")} rounded-t`} style={{ height: `${Math.max((c.current / maxVal) * 28, 2)}px` }} />
+                              <span className="text-[9px] text-zinc-600 mt-0.5">This wk</span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
                 <Activity className="h-4 w-4" /> Recent Registrations (7 days)
               </CardTitle>
             </CardHeader>

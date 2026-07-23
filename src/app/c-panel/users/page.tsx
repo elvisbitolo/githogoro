@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { Shield, ArrowLeft, Search, Trash2, CheckCircle, XCircle, ChevronDown, Loader2 } from "lucide-react"
+import {
+  Shield, ArrowLeft, Search, Trash2, CheckCircle, XCircle, ChevronDown,
+  Loader2, Eye, Star, Award, MessageSquare, Briefcase, Calendar,
+} from "lucide-react"
 import Link from "next/link"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -24,6 +27,30 @@ interface Profile {
   createdAt: string
 }
 
+interface UserActivity {
+  id: string
+  name: string
+  phone: string
+  zone: string | null
+  bio: string | null
+  role: string
+  reputationScore: number
+  reputationPoints: number
+  isVerified: boolean
+  createdAt: string
+  activity: {
+    messages: number
+    posts: number
+    jobs: number
+    businesses: number
+    events: number
+    harambees: number
+    skills: number
+  }
+  recentMessages: { id: string; text: string | null; createdAt: string; room: { name: string } }[]
+  recentPosts: { id: string; content: string | null; createdAt: string; likesCount: number; commentsCount: number }[]
+}
+
 export default function AdminUsersPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,6 +66,12 @@ export default function AdminUsersPage() {
   }>({ open: false, title: "", description: "", action: () => {}, variant: "default" })
 
   const [roleMenu, setRoleMenu] = useState<string | null>(null)
+  const [inspector, setInspector] = useState<{ open: boolean; data: UserActivity | null; loading: boolean }>({
+    open: false, data: null, loading: false,
+  })
+  const [repDialog, setRepDialog] = useState<{ open: boolean; user: Profile | null; points: string; reason: string }>({
+    open: false, user: null, points: "", reason: "",
+  })
 
   useEffect(() => {
     fetchProfiles()
@@ -119,6 +152,48 @@ export default function AdminUsersPage() {
     })
   }
 
+  const handleInspectUser = async (user: Profile) => {
+    setInspector({ open: true, data: null, loading: true })
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/activity`)
+      const data = await res.json()
+      setInspector({ open: true, data, loading: false })
+    } catch {
+      setInspector({ open: true, data: null, loading: false })
+    }
+  }
+
+  const handleAdjustReputation = async () => {
+    if (!repDialog.user || !repDialog.points) return
+    const points = parseInt(repDialog.points, 10)
+    if (isNaN(points)) return
+
+    setUpdating(repDialog.user.id)
+    try {
+      const res = await fetch(`/api/admin/users/${repDialog.user.id}/reputation`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ points, reason: repDialog.reason || undefined }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setProfiles((prev) =>
+          prev.map((p) =>
+            p.id === repDialog.user!.id
+              ? { ...p, reputationPoints: data.reputationPoints, reputationScore: data.reputationScore }
+              : p
+          )
+        )
+        setRepDialog({ open: false, user: null, points: "", reason: "" })
+      } else {
+        const err = await res.json().catch(() => ({ error: "Failed" }))
+        alert(`Error: ${err.error || "Failed to update reputation"}`)
+      }
+    } finally {
+      setUpdating(null)
+    }
+  }
+
   const roleColor = (role: string) => {
     switch (role) {
       case "admin": return "bg-red-500/20 text-red-400 border-red-500/30"
@@ -190,6 +265,22 @@ export default function AdminUsersPage() {
                     </div>
                   ) : (
                     <>
+                      <button
+                        onClick={() => handleInspectUser(p)}
+                        className="rounded-lg border border-zinc-800 p-1.5 hover:bg-zinc-800 transition-colors"
+                        title="View activity"
+                      >
+                        <Eye className="h-4 w-4 text-zinc-400" />
+                      </button>
+
+                      <button
+                        onClick={() => setRepDialog({ open: true, user: p, points: "", reason: "" })}
+                        className="rounded-lg border border-zinc-800 p-1.5 hover:bg-zinc-800 transition-colors"
+                        title="Adjust reputation"
+                      >
+                        <Star className="h-4 w-4 text-amber-400" />
+                      </button>
+
                       <div className="relative">
                         <button
                           onClick={() => setRoleMenu(roleMenu === p.id ? null : p.id)}
@@ -243,6 +334,7 @@ export default function AdminUsersPage() {
         )}
       </div>
 
+      {/* Confirm Dialog */}
       <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog((d) => ({ ...d, open }))}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
           <DialogHeader>
@@ -259,6 +351,147 @@ export default function AdminUsersPage() {
             >
               Confirm
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Inspector Dialog */}
+      <Dialog open={inspector.open} onOpenChange={(open) => setInspector((s) => ({ ...s, open }))}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100 max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-zinc-400" /> User Profile Inspector
+            </DialogTitle>
+          </DialogHeader>
+          {inspector.loading ? (
+            <div className="py-8 text-center text-zinc-500">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" /> Loading profile...
+            </div>
+          ) : inspector.data ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-14 w-14">
+                  <AvatarFallback className="bg-zinc-800 text-zinc-400 text-lg">
+                    {inspector.data.name?.charAt(0) || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-lg font-bold">{inspector.data.name}</h3>
+                  <div className="flex items-center gap-2 text-sm text-zinc-500">
+                    <Badge variant="outline" className={roleColor(inspector.data.role)}>{inspector.data.role}</Badge>
+                    {inspector.data.isVerified && <Badge className="bg-emerald-600 text-[10px]">Verified</Badge>}
+                    <span>Score: {inspector.data.reputationScore}</span>
+                  </div>
+                </div>
+              </div>
+
+              {inspector.data.bio && (
+                <p className="text-sm text-zinc-400 italic">&quot;{inspector.data.bio}&quot;</p>
+              )}
+
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: "Messages", value: inspector.data.activity.messages, icon: MessageSquare, color: "text-emerald-400" },
+                  { label: "Posts", value: inspector.data.activity.posts, icon: MessageSquare, color: "text-blue-400" },
+                  { label: "Jobs", value: inspector.data.activity.jobs, icon: Briefcase, color: "text-amber-400" },
+                  { label: "Businesses", value: inspector.data.activity.businesses, icon: Briefcase, color: "text-purple-400" },
+                  { label: "Events", value: inspector.data.activity.events, icon: Calendar, color: "text-cyan-400" },
+                  { label: "Harambees", value: inspector.data.activity.harambees, icon: Award, color: "text-pink-400" },
+                  { label: "Skills", value: inspector.data.activity.skills, icon: Award, color: "text-orange-400" },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-lg bg-zinc-800/50 p-3 text-center">
+                    <stat.icon className={`h-4 w-4 ${stat.color} mx-auto mb-1`} />
+                    <div className="text-lg font-bold">{stat.value}</div>
+                    <div className="text-[10px] text-zinc-500">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {inspector.data.recentPosts.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-semibold text-zinc-500 uppercase mb-2">Recent Posts</h4>
+                  <div className="space-y-2">
+                    {inspector.data.recentPosts.map((post) => (
+                      <div key={post.id} className="rounded-lg bg-zinc-800/50 p-3 text-sm">
+                        <p className="text-zinc-400 line-clamp-2">{post.content || "[media]"}</p>
+                        <div className="flex items-center gap-3 text-xs text-zinc-600 mt-1">
+                          <span>{new Date(post.createdAt).toLocaleString()}</span>
+                          <span>{post.likesCount} likes</span>
+                          <span>{post.commentsCount} comments</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {inspector.data.recentMessages.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-semibold text-zinc-500 uppercase mb-2">Recent Messages</h4>
+                  <div className="space-y-2">
+                    {inspector.data.recentMessages.map((msg) => (
+                      <div key={msg.id} className="rounded-lg bg-zinc-800/50 p-3 text-sm">
+                        <p className="text-zinc-400 line-clamp-2">{msg.text || "[media]"}</p>
+                        <div className="flex items-center gap-3 text-xs text-zinc-600 mt-1">
+                          <span>in {msg.room.name}</span>
+                          <span>{new Date(msg.createdAt).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-zinc-500 text-sm text-center py-4">Failed to load profile.</p>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reputation Dialog */}
+      <Dialog open={repDialog.open} onOpenChange={(open) => setRepDialog((d) => ({ ...d, open }))}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-amber-400" /> Adjust Reputation
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-zinc-400">
+              Adjusting reputation for <strong className="text-zinc-200">{repDialog.user?.name}</strong>
+              <span className="text-zinc-600 ml-1">(current: {repDialog.user?.reputationPoints} pts)</span>
+            </p>
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Points (positive to add, negative to subtract)</label>
+              <Input
+                type="number"
+                value={repDialog.points}
+                onChange={(e) => setRepDialog((d) => ({ ...d, points: e.target.value }))}
+                placeholder="e.g. 50 or -20"
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Reason (optional)</label>
+              <Input
+                value={repDialog.reason}
+                onChange={(e) => setRepDialog((d) => ({ ...d, reason: e.target.value }))}
+                placeholder="e.g. Community contribution award"
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setRepDialog({ open: false, user: null, points: "", reason: "" })}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAdjustReputation}
+                disabled={!repDialog.points}
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                Apply
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

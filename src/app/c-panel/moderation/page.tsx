@@ -31,15 +31,18 @@ export default function AdminModerationPage() {
   })
 
   useEffect(() => {
-    fetchMessages()
+    let cancelled = false
+    async function load() {
+      const res = await fetch("/api/admin/messages")
+      const data = await res.json()
+      if (!cancelled) {
+        setMessages(data)
+        setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
   }, [])
-
-  const fetchMessages = async () => {
-    const res = await fetch("/api/admin/messages")
-    const data = await res.json()
-    setMessages(data)
-    setLoading(false)
-  }
 
   const filtered = messages.filter((msg) => {
     const matchesSearch = !search ||
@@ -58,14 +61,10 @@ export default function AdminModerationPage() {
 
   const handleWarnUser = async (userId: string) => {
     if (!userId) return
-    await fetch("/api/alerts", {
+    await fetch(`/api/admin/users/${userId}/warn`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: "Community Warning",
-        type: "general",
-        alertBody: "Your account has received a warning from an administrator for violating community guidelines.",
-      }),
+      body: JSON.stringify({ reason: "Violating community guidelines" }),
     })
     setWarnDialog({ open: false, userId: null, userName: "" })
   }

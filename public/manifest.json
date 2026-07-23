@@ -1,8 +1,8 @@
 {
-  "name": "Githogoro Connect",
+  "name": "Githogoro",
   "short_name": "Githogoro",
   "description": "Karibu Githogoro — The Heart of Our Community",
-  "start_url": "/",
+  "start_url": "https://githogoro.vercel.app/",
   "display": "standalone",
   "background_color": "#FAF9F6",
   "theme_color": "#1B4332",

@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/c-panel/"],
       },
     ],
-    sitemap: "https://githogoro.vercel.app/sitemap.xml",
+    sitemap: "https://githogoro.netlify.app/sitemap.xml",
   }
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Users, Search, MapPin, Phone, Calendar, MessageCircle, Briefcase, Shield, Star, Filter, MessageSquare, UserPlus, Clock } from "lucide-react"
+import { Users, Search, MapPin, Calendar, MessageCircle, Briefcase, Shield, Filter, UserPlus, UserCheck } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -68,12 +68,23 @@ function timeSince(date: string | null) {
 }
 
 export default function PeoplePage() {
-  const [profiles, setProfiles] = useState<any[]>([])
+  const [profiles, setProfiles] = useState<Array<{
+    id: string; name: string; bio: string | null; zone: string | null;
+    avatarUrl: string | null; role: string | null; isVerified: boolean;
+    createdAt: string; lastSeen: string | null;
+  }>>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [zoneFilter, setZoneFilter] = useState("All Zones")
   const [roleFilter, setRoleFilter] = useState("All")
   const [showFilters, setShowFilters] = useState(false)
+  const [followState, setFollowState] = useState<Record<string, boolean>>({})
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     fetch("/api/profiles")
@@ -84,11 +95,22 @@ export default function PeoplePage() {
       })
   }, [])
 
+  const handleFollow = async (userId: string) => {
+    const isFollowing = followState[userId]
+    setFollowState((prev) => ({ ...prev, [userId]: !isFollowing }))
+    try {
+      await fetch(`/api/follow/${userId}`, {
+        method: isFollowing ? "DELETE" : "POST",
+      })
+    } catch {
+      setFollowState((prev) => ({ ...prev, [userId]: isFollowing }))
+    }
+  }
+
   const filtered = profiles.filter((p) => {
     if (!p.name) return false
     const matchesSearch = !searchQuery.trim() ||
       p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.phone?.includes(searchQuery) ||
       p.bio?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesZone = zoneFilter === "All Zones" || p.zone === zoneFilter
     const matchesRole = roleFilter === "All" ||
@@ -99,7 +121,7 @@ export default function PeoplePage() {
 
   const onlineCount = profiles.filter(p => {
     if (!p.lastSeen) return false
-    return (Date.now() - new Date(p.lastSeen).getTime()) < 15 * 60 * 1000
+    return (now - new Date(p.lastSeen).getTime()) < 15 * 60 * 1000
   }).length
 
   return (
@@ -126,7 +148,7 @@ export default function PeoplePage() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-zinc-900">Grow the community!</p>
-              <p className="text-xs text-zinc-500">Only {profiles.length} members so far. Invite your neighbors to join Githogoro Connect.</p>
+              <p className="text-xs text-zinc-500">Only {profiles.length} members so far. Invite your neighbors to join Githogoro.</p>
             </div>
             <Link
               href="/invite"
@@ -143,7 +165,7 @@ export default function PeoplePage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
           <input
             type="text"
-            placeholder="Search by name, phone, or bio..."
+            placeholder="Search by name or bio..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex h-10 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 py-2 text-sm text-zinc-900 ring-offset-white placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 transition-colors"
@@ -254,14 +276,14 @@ export default function PeoplePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((profile) => {
             const isOnline = profile.lastSeen &&
-              (Date.now() - new Date(profile.lastSeen).getTime()) < 15 * 60 * 1000
+              (now - new Date(profile.lastSeen).getTime()) < 15 * 60 * 1000
             return (
               <Card key={profile.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="relative shrink-0">
                       <Avatar className="h-14 w-14">
-                        <AvatarImage src={profile.avatarUrl} />
+                        <AvatarImage src={profile.avatarUrl ?? undefined} />
                         <AvatarFallback className={getAvatarColor(profile.name || "U")}>
                           {(profile.name || "U").charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -280,7 +302,7 @@ export default function PeoplePage() {
                             </svg>
                           </span>
                         )}
-                        {profile.createdAt && (Date.now() - new Date(profile.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000 && (
+                        {profile.createdAt && (now - new Date(profile.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000 && (
                           <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0 font-medium">
                             New
                           </span>
@@ -309,12 +331,6 @@ export default function PeoplePage() {
                   )}
 
                   <div className="space-y-1.5 text-sm text-zinc-500 mb-4">
-                    {profile.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{profile.phone}</span>
-                      </div>
-                    )}
                     {profile.zone && (
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3.5 w-3.5 shrink-0" />
@@ -336,6 +352,20 @@ export default function PeoplePage() {
                   </div>
 
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => handleFollow(profile.id)}
+                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                        followState[profile.id]
+                          ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                          : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                      }`}
+                    >
+                      {followState[profile.id] ? (
+                        <><UserCheck className="h-4 w-4" /> Following</>
+                      ) : (
+                        <><UserPlus className="h-4 w-4" /> Follow</>
+                      )}
+                    </button>
                     <Link
                       href="/chat/new"
                       className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800 transition-colors"
@@ -343,25 +373,6 @@ export default function PeoplePage() {
                       <MessageCircle className="h-4 w-4" />
                       Message
                     </Link>
-                    {profile.phone && (
-                      <>
-                        <a
-                          href={`https://wa.me/${profile.phone.replace("+", "")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
-                          title="WhatsApp"
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </a>
-                        <a
-                          href={`tel:${profile.phone}`}
-                          className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
-                        >
-                          <Phone className="h-4 w-4" />
-                        </a>
-                      </>
-                    )}
                   </div>
                 </CardContent>
               </Card>
