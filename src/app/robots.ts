@@ -8,7 +8,11 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: ["/api/", "/c-panel/"],
       },
+      {
+        userAgent: "*",
+        allow: "/api/stats",
+      },
     ],
-    sitemap: "https://githogoro.netlify.app/sitemap.xml",
+    sitemap: "https://githogoro.onrender.com/sitemap.xml",
   }
 }
