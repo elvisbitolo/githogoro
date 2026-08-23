@@ -16,8 +16,17 @@ const CATEGORIES = [
   { value: "other", label: "Other" },
 ]
 
+interface ClientEvent {
+  id: string
+  title: string
+  date: string
+  location: string
+  category: string
+  rsvpCounts?: { going: number; maybe: number; notGoing: number }
+}
+
 export default function EventsPageClient() {
-  const [events, setEvents] = useState<any[]>([])
+  const [events, setEvents] = useState<ClientEvent[]>([])
   const [loading, setLoading] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [initialized, setInitialized] = useState(false)
@@ -32,7 +41,12 @@ export default function EventsPageClient() {
     setInitialized(true)
   }, [])
 
-  useEffect(() => { fetchEvents() }, [fetchEvents])
+  useEffect(() => {
+    async function load() {
+      await fetchEvents()
+    }
+    load()
+  }, [fetchEvents])
 
   if (!initialized && !loading) return null
 
@@ -71,7 +85,7 @@ export default function EventsPageClient() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {upcoming.map((event: any) => {
+          {upcoming.map((event) => {
             const date = new Date(event.date)
             return (
               <Link key={event.id} href={`/events/${event.id}`}>

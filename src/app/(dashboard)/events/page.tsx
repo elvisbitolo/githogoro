@@ -20,11 +20,21 @@ function getGradient(id: string) {
   return GRADIENTS[Math.abs(hash) % GRADIENTS.length]
 }
 
+interface EventWithCounts {
+  id: string
+  title: string
+  description: string | null
+  location: string
+  date: Date
+  category: string
+  rsvps: { status: string }[]
+  rsvpCounts: { going: number; maybe: number; notGoing: number }
+}
+
 export default async function EventsPage() {
-  let events: any[] = []
+  let events: EventWithCounts[] = []
   try {
-    const now = new Date()
-    events = await prisma.event.findMany({
+    const rows = await prisma.event.findMany({
       orderBy: { date: "asc" },
       take: 20,
       include: {
@@ -32,12 +42,12 @@ export default async function EventsPage() {
         rsvps: { select: { status: true } },
       },
     })
-    events = events.map((e) => ({
+    events = rows.map((e) => ({
       ...e,
       rsvpCounts: {
-        going: e.rsvps.filter((r: any) => r.status === "going").length,
-        maybe: e.rsvps.filter((r: any) => r.status === "maybe").length,
-        notGoing: e.rsvps.filter((r: any) => r.status === "not_going").length,
+        going: e.rsvps.filter((r) => r.status === "going").length,
+        maybe: e.rsvps.filter((r) => r.status === "maybe").length,
+        notGoing: e.rsvps.filter((r) => r.status === "not_going").length,
       },
     }))
   } catch {
@@ -69,7 +79,7 @@ export default async function EventsPage() {
             <div>
               <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">Upcoming ({upcoming.length})</h2>
               <div className="space-y-3">
-                {upcoming.map((event: any) => {
+                {upcoming.map((event) => {
                   const date = new Date(event.date)
                   return (
                     <Link key={event.id} href={`/events/${event.id}`}>
@@ -107,7 +117,7 @@ export default async function EventsPage() {
             <div>
               <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">Past ({past.length})</h2>
               <div className="space-y-3 opacity-75">
-                {past.map((event: any) => {
+                {past.map((event) => {
                   const date = new Date(event.date)
                   return (
                     <Link key={event.id} href={`/events/${event.id}`}>

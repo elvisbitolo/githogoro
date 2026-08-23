@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 
@@ -17,7 +18,24 @@ export async function GET(
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const where: any = { userId }
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const viewer = await prisma.profile.findUnique({
+      where: { id: user.id },
+      select: { zone: true },
+    })
+
+    const isOwner = user.id === userId
+
+    const where: Prisma.PostWhereInput = { userId }
+    if (!isOwner) {
+      const zoneFilter: Prisma.PostWhereInput[] = viewer?.zone
+        ? [{ privacy: "neighbors", user: { zone: viewer.zone } }]
+        : []
+      where.OR = [{ privacy: "public" }, ...zoneFilter]
+    }
     if (cursor) {
       const cursorPost = await prisma.post.findUnique({ where: { id: cursor } })
       if (cursorPost) {

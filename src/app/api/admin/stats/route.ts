@@ -70,9 +70,9 @@ export async function GET() {
     const mostActiveUsers = activeUsersRaw.map((u) => {
       const profile = profileMap.get(u.userId)
       return {
-        name: (profile as any)?.name || "Unknown",
+        name: profile?.name || "Unknown",
         messageCount: u._count.id,
-        zone: (profile as any)?.zone || null,
+        zone: profile?.zone || null,
       }
     })
 

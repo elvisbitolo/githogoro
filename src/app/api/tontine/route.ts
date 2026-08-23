@@ -58,15 +58,27 @@ export async function POST(request: Request) {
       )
     }
 
+    const amount = parseFloat(contributionAmount)
+    const max = parseInt(maxMembers, 10)
+
+    if (isNaN(amount) || amount <= 0) {
+      return NextResponse.json(
+        { error: "Contribution amount must be a positive number" },
+        { status: 400 }
+      )
+    }
+
+    const memberLimit = !isNaN(max) && max > 0 ? max : 20
+
     const group = await prisma.tontineGroup.create({
       data: {
         name,
         description: description || null,
-        contributionAmount: parseFloat(contributionAmount),
+        contributionAmount: amount,
         frequency: frequency || "weekly",
-        maxMembers: maxMembers || 20,
+        maxMembers: memberLimit,
         creatorId: user.id,
-        totalCycles: maxMembers || 20,
+        totalCycles: memberLimit,
       },
       include: {
         creator: {

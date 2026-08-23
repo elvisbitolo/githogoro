@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { getUserProfile, isStaffRole } from "@/lib/user-role";
 
 export async function GET(
   request: Request,
@@ -8,6 +9,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const alert = await prisma.sOSAlert.findUnique({
       where: { id },
       include: {
@@ -55,7 +65,27 @@ export async function PUT(
     const { status, message } = body;
 
     if (status) {
-      const alert = await prisma.sOSAlert.update({
+      const alert = await prisma.sOSAlert.findUnique({
+        where: { id },
+        select: { id: true, userId: true },
+      });
+
+      if (!alert) {
+        return NextResponse.json({ error: "SOS alert not found" }, { status: 404 });
+      }
+
+      const profile = await getUserProfile(user.id);
+      const isOwner = alert.userId === user.id;
+      const isStaff = isStaffRole(profile?.role);
+
+      if (!isOwner && !isStaff) {
+        return NextResponse.json(
+          { error: "Only the alert creator can change its status" },
+          { status: 403 }
+        );
+      }
+
+      const updated = await prisma.sOSAlert.update({
         where: { id },
         data: { status },
         include: {
@@ -64,7 +94,7 @@ export async function PUT(
           },
         },
       });
-      return NextResponse.json(alert);
+      return NextResponse.json(updated);
     }
 
     if (message) {

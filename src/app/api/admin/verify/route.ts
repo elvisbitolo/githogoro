@@ -1,20 +1,35 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
-import { isAdmin } from "@/lib/supabase/admin"
+import { verifyAdmin, verifyModerator } from "@/lib/admin-guard"
 
 export async function GET() {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const adminResult = await verifyAdmin()
 
-    if (!user) {
-      return NextResponse.json({ isAdmin: false }, { status: 401 })
+    if ("error" in adminResult) {
+      // Fall back: maybe a moderator
+      const modResult = await verifyModerator()
+      if ("error" in modResult) {
+        return NextResponse.json(
+          { isAdmin: false, isModerator: false, role: null },
+          { status: 401 }
+        )
+      }
+      return NextResponse.json({
+        isAdmin: false,
+        isModerator: true,
+        role: modResult.role,
+      })
     }
 
-    const adminStatus = await isAdmin(user.id)
-
-    return NextResponse.json({ isAdmin: adminStatus })
+    return NextResponse.json({
+      isAdmin: true,
+      isModerator: true,
+      role: adminResult.role,
+    })
   } catch {
-    return NextResponse.json({ isAdmin: false }, { status: 500 })
+    return NextResponse.json(
+      { isAdmin: false, isModerator: false, role: null },
+      { status: 500 }
+    )
   }
 }

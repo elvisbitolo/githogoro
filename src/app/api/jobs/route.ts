@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -9,7 +10,7 @@ export async function GET(request: Request) {
     const location = searchParams.get("location");
     const sort = searchParams.get("sort") || "newest";
 
-    const where: any = { isActive: true };
+    const where: Prisma.JobWhereInput = { isActive: true };
 
     if (type && type !== "all") {
       where.jobType = type;
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
       where.location = { contains: location, mode: "insensitive" };
     }
 
-    const orderBy: any =
+    const orderBy: Prisma.JobOrderByWithRelationInput =
       sort === "oldest" ? { createdAt: "asc" } : { createdAt: "desc" };
 
     const jobs = await prisma.job.findMany({

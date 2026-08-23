@@ -128,8 +128,6 @@ export default function PostDetailPage() {
       }
     } catch {
       // silent
-    } finally {
-      setLoading(false)
     }
   }, [postId])
 
@@ -153,8 +151,12 @@ export default function PostDetailPage() {
   }, [postId])
 
   useEffect(() => {
-    fetchPost()
-    fetchComments()
+    async function load() {
+      await fetchPost()
+      await fetchComments()
+      setLoading(false)
+    }
+    load()
   }, [fetchPost, fetchComments])
 
   const handleReact = async (type: string) => {

@@ -5,16 +5,26 @@ import { Store, Star, MapPin } from "lucide-react"
 import Link from "next/link"
 import BusinessesPageClient from "./page-client"
 
+interface BusinessWithReviews {
+  id: string
+  name: string
+  category: string
+  description: string | null
+  photos: string[]
+  isFeatured: boolean
+  reviews: { rating: number }[]
+}
+
 export default async function BusinessesPage() {
-  let businesses: any[] = []
+  let businesses: BusinessWithReviews[] = []
   try {
-    businesses = await prisma.business.findMany({
+    businesses = (await prisma.business.findMany({
       orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
       take: 20,
       include: {
         reviews: { select: { rating: true } },
       },
-    })
+    })) as unknown as BusinessWithReviews[]
   } catch {
     // DB not available
   }
@@ -22,7 +32,7 @@ export default async function BusinessesPage() {
   const businessList = businesses.map((biz) => ({
     ...biz,
     avgRating: biz.reviews.length > 0
-      ? biz.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / biz.reviews.length
+      ? biz.reviews.reduce((sum, r) => sum + r.rating, 0) / biz.reviews.length
       : 0,
     reviewCount: biz.reviews.length,
   }))
@@ -47,7 +57,7 @@ export default async function BusinessesPage() {
 
       {businessList.length > 0 ? (
         <div className="space-y-3">
-          {businessList.map((biz: any) => (
+          {businessList.map((biz) => (
             <Link key={biz.id} href={`/businesses/${biz.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4 sm:p-5">

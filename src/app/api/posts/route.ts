@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
     })
     const authorIds = [user.id, ...followedIds.map((f) => f.followingId)]
 
-    const where: any = {
+    const where: Prisma.PostWhereInput = {
       userId: { in: authorIds },
       privacy: { not: "private" },
     }

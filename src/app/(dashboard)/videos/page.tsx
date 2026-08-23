@@ -33,6 +33,21 @@ type VideoItem = {
   commentsCount?: number
 }
 
+type VideoRow = {
+  id: string
+  title: string
+  description: string | null
+  url: string
+  thumbnailUrl: string | null
+  createdAt: string
+  userId: string
+  user: Profile
+}
+
+type CommentRow = Comment & {
+  commenter?: Profile
+}
+
 export default function VideosPage() {
   const [videos, setVideos] = useState<VideoItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,7 +63,7 @@ export default function VideosPage() {
     const res = await fetch("/api/videos")
     if (res.ok) {
       const data = await res.json()
-      const mapped = data.map((v: any) => ({
+      const mapped = data.map((v: VideoRow) => ({
         ...v,
         profiles: v.user,
       }))
@@ -91,7 +106,7 @@ export default function VideosPage() {
         const res = await fetch(`/api/videos/${vidId}/comments`)
         if (!res.ok) return { vidId, comments: [] }
         const data = await res.json()
-        const mapped = data.map((c: any) => ({
+        const mapped = data.map((c: CommentRow) => ({
           ...c,
           profiles: c.user,
         }))
@@ -113,14 +128,19 @@ export default function VideosPage() {
   }, [])
 
   useEffect(() => {
-    fetchVideos()
+    async function load() {
+      await fetchVideos()
+    }
+    load()
   }, [fetchVideos])
 
   useEffect(() => {
     if (!loading && videos.length > 0) {
       const ids = videos.map((v) => v.id)
-      fetchLikes(ids)
-      fetchComments(ids)
+      async function load() {
+        await Promise.all([fetchLikes(ids), fetchComments(ids)])
+      }
+      load()
     }
   }, [loading, videos, fetchLikes, fetchComments])
 
@@ -163,7 +183,7 @@ export default function VideosPage() {
     const res = await fetch(`/api/videos/${videoId}/comments`)
     if (res.ok) {
       const data = await res.json()
-      const mapped = data.map((c: any) => ({
+      const mapped = data.map((c: CommentRow) => ({
         ...c,
         profiles: c.commenter,
       }))

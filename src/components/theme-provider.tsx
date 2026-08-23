@@ -14,15 +14,17 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [isDark, setIsDark] = useState(false)
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === "undefined") return false
+    const saved = localStorage.getItem("githogoro-theme")
+    return saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)
+  })
 
   useEffect(() => {
-    const saved = localStorage.getItem("githogoro-theme")
-    if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      setIsDark(true)
+    if (isDark) {
       document.documentElement.classList.add("dark")
     }
-  }, [])
+  }, [isDark])
 
   const toggle = () => {
     setIsDark((prev) => {

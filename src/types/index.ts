@@ -68,7 +68,7 @@ export interface Business {
   locationLat: number | null
   locationLng: number | null
   phone: string
-  openingHours: any | null
+  openingHours: Record<string, { open: string; close: string; closed: boolean }> | null
   isFeatured: boolean
   photos: string[]
   ownerId: string | null

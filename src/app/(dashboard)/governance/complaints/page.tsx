@@ -33,7 +33,6 @@ export default function ComplaintsPage() {
   const [filter, setFilter] = useState("all")
 
   useEffect(() => {
-    setLoading(true)
     const params = new URLSearchParams()
     if (filter !== "all") params.set("status", filter)
 

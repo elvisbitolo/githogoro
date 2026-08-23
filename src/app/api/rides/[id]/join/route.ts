@@ -19,18 +19,34 @@ export async function POST(
     if (ride.driverId === user.id) return NextResponse.json({ error: "Cannot join your own ride" }, { status: 400 })
     if (ride.seats <= 0) return NextResponse.json({ error: "No seats available" }, { status: 400 })
 
-    const updated = await prisma.rideShare.update({
+    const claimed = await prisma.rideShare.updateMany({
+      where: { id, status: "scheduled", riderId: null, seats: { gt: 0 } },
+      data: { riderId: user.id, seats: { decrement: 1 } },
+    })
+
+    if (claimed.count === 0) {
+      return NextResponse.json({ error: "No seats available" }, { status: 400 })
+    }
+
+    const updated = await prisma.rideShare.findUnique({
       where: { id },
-      data: {
-        riderId: user.id,
-        seats: ride.seats - 1,
-        status: ride.seats - 1 <= 0 ? "full" : "scheduled",
-      },
       include: {
         driver: { select: { id: true, name: true, avatarUrl: true, zone: true } },
         rider: { select: { id: true, name: true, avatarUrl: true } },
       },
     })
+
+    if (!updated) {
+      return NextResponse.json({ error: "Ride not found" }, { status: 404 })
+    }
+
+    if (updated.seats <= 0) {
+      await prisma.rideShare.updateMany({
+        where: { id, status: "scheduled" },
+        data: { status: "full" },
+      })
+    }
+
     return NextResponse.json(updated)
   } catch (error) {
     console.error("POST /api/rides/[id]/join error:", error)

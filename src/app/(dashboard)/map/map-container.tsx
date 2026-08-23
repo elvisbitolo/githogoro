@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import type { Map as LeafletMap, Marker as LeafletMarker } from "leaflet"
 
 const CATEGORY_COLORS: Record<string, string> = {
   school: "#3b82f6",
@@ -37,59 +38,12 @@ interface MapContainerProps {
 
 export function MapContainer({ places, selectedCategory, onPlaceClick }: MapContainerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<any>(null)
-  const markersRef = useRef<any[]>([])
+  const mapRef = useRef<LeafletMap | null>(null)
+  const markersRef = useRef<LeafletMarker[]>([])
+  const [ready, setReady] = useState(false)
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    if (!mapContainerRef.current) return
-
-    async function initMap() {
-      const L = await import("leaflet")
-      await import("leaflet/dist/leaflet.css")
-
-      if (!mapContainerRef.current) return
-
-      const map = L.map(mapContainerRef.current, {
-        center: [-1.213, 36.824] as any,
-        zoom: 15,
-        zoomControl: true,
-      })
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
-        maxZoom: 19,
-      }).addTo(map)
-
-      mapRef.current = map
-
-      renderMarkers(L, map)
-    }
-
-    initMap()
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove()
-        mapRef.current = null
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    if (!mapRef.current) return
-
-    async function updateMarkers() {
-      const L = await import("leaflet")
-      renderMarkers(L, mapRef.current)
-    }
-
-    updateMarkers()
-  }, [places, selectedCategory])
-
-  function renderMarkers(L: any, map: any) {
-    markersRef.current.forEach((m: any) => map.removeLayer(m))
+  function renderMarkers(L: typeof import("leaflet"), map: LeafletMap) {
+    markersRef.current.forEach((m) => map.removeLayer(m))
     markersRef.current = []
 
     const filtered = selectedCategory
@@ -117,12 +71,12 @@ export function MapContainer({ places, selectedCategory, onPlaceClick }: MapCont
           background: white;
           border-radius: 50%;
         "></div></div>`,
-        iconSize: [12, 12] as any,
-        iconAnchor: [6, 6] as any,
-        popupAnchor: [0, -8] as any,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+        popupAnchor: [0, -8],
       })
 
-      const marker = L.marker([place.lat, place.lng] as any, { icon }).addTo(map)
+      const marker = L.marker([place.lat, place.lng], { icon }).addTo(map)
 
       let popupHtml = `<strong>${place.name}</strong><br/>${place.category}`
       if (place.description) popupHtml += `<br/>${place.description}`
@@ -137,6 +91,58 @@ export function MapContainer({ places, selectedCategory, onPlaceClick }: MapCont
       markersRef.current.push(marker)
     })
   }
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (!mapContainerRef.current) return
+
+    async function initMap() {
+      const L = await import("leaflet")
+      await import("leaflet/dist/leaflet.css")
+
+      if (!mapContainerRef.current) return
+
+      const map = L.map(mapContainerRef.current, {
+        center: [-1.213, 36.824],
+        zoom: 15,
+        zoomControl: true,
+      })
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
+        maxZoom: 19,
+      }).addTo(map)
+
+      mapRef.current = map
+
+      renderMarkers(L, map)
+      setReady(true)
+    }
+
+    initMap()
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove()
+        mapRef.current = null
+      }
+      setReady(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (!mapRef.current) return
+
+    const map = mapRef.current
+
+    async function updateMarkers() {
+      const L = await import("leaflet")
+      renderMarkers(L, map)
+    }
+
+    updateMarkers()
+  }, [places, selectedCategory, ready])
 
   return (
     <div ref={mapContainerRef} className="w-full h-[400px] sm:h-[500px] lg:h-[600px]" />

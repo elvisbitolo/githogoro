@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 import { createNotification } from "@/lib/notifications"
@@ -18,7 +19,7 @@ export async function GET(
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const where: any = { postId: id }
+    const where: Prisma.PostCommentWhereInput = { postId: id }
     if (cursor) {
       const cursorComment = await prisma.postComment.findUnique({ where: { id: cursor } })
       if (cursorComment) {

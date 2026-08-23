@@ -52,7 +52,6 @@ export default function AlertsPage() {
   }, [filter])
 
   useEffect(() => {
-    setLoading(true)
     fetchAlerts()
   }, [fetchAlerts])
 

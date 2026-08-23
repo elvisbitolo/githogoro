@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useTranslations } from "@/lib/i18n/context"
 import { Button } from "@/components/ui/button"
+import type { Map as LeafletMap, Marker as LeafletMarker, LeafletMouseEvent } from "leaflet"
 
 const CATEGORIES = [
   "school",
@@ -29,8 +30,8 @@ export function ReportPlace({ open, onClose, onSubmitted }: ReportPlaceProps) {
   const { t } = useTranslations()
   const supabase = createClient()
   const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<any>(null)
-  const markerRef = useRef<any>(null)
+  const mapInstanceRef = useRef<LeafletMap | null>(null)
+  const markerRef = useRef<LeafletMarker | null>(null)
 
   const [name, setName] = useState("")
   const [category, setCategory] = useState<string>("business")
@@ -52,7 +53,7 @@ export function ReportPlace({ open, onClose, onSubmitted }: ReportPlaceProps) {
       if (!mapRef.current) return
 
       const map = L.map(mapRef.current, {
-        center: [-1.213, 36.824] as any,
+        center: [-1.213, 36.824],
         zoom: 15,
         zoomControl: true,
       })
@@ -62,7 +63,7 @@ export function ReportPlace({ open, onClose, onSubmitted }: ReportPlaceProps) {
         maxZoom: 19,
       }).addTo(map)
 
-      map.on("click", (e: any) => {
+      map.on("click", (e: LeafletMouseEvent) => {
         setLat(e.latlng.lat)
         setLng(e.latlng.lng)
 
@@ -84,11 +85,11 @@ export function ReportPlace({ open, onClose, onSubmitted }: ReportPlaceProps) {
             background: white;
             border-radius: 50%;
           "></div></div>`,
-          iconSize: [12, 12] as any,
-          iconAnchor: [6, 6] as any,
+          iconSize: [12, 12],
+          iconAnchor: [6, 6],
         })
 
-        markerRef.current = L.marker([e.latlng.lat, e.latlng.lng] as any, { icon }).addTo(map)
+        markerRef.current = L.marker([e.latlng.lat, e.latlng.lng], { icon }).addTo(map)
       })
 
       mapInstanceRef.current = map

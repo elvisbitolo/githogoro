@@ -4,6 +4,15 @@ import { createClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const challenges = await prisma.savingsChallenge.findMany({
       include: {
         members: {
@@ -13,7 +22,20 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json(challenges)
+    const myMemberships = await prisma.savingsChallengeMember.findMany({
+      where: { userId: user.id },
+      select: { challengeId: true },
+    })
+    const memberChallengeIds = new Set(myMemberships.map((m) => m.challengeId))
+
+    const scoped = challenges.map((challenge) => ({
+      ...challenge,
+      members: memberChallengeIds.has(challenge.id)
+        ? challenge.members
+        : challenge.members.map(({ savedAmount: _savedAmount, ...member }) => member),
+    }))
+
+    return NextResponse.json(scoped)
   } catch (error) {
     console.error("GET /api/savings error:", error)
     return NextResponse.json(

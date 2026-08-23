@@ -45,19 +45,18 @@ const GRADIENTS = [
   "from-lime-400 to-green-500",
 ]
 
-export default function MarketplacePageClient() {
-  const [items, setItems] = useState<MarketplaceItem[]>([])
+export default function MarketplacePageClient({ initialItems = [] }: { initialItems?: MarketplaceItem[] }) {
+  const [items, setItems] = useState<MarketplaceItem[]>(initialItems)
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
   const [activeCategory, setActiveCategory] = useState("all")
-  const [initialized, setInitialized] = useState(false)
+  const [initialized, setInitialized] = useState(initialItems.length > 0)
 
   useEffect(() => {
     const params = new URLSearchParams()
     if (activeCategory !== "all") params.set("category", activeCategory)
     if (search) params.set("search", search)
 
-    setLoading(true)
     fetch(`/api/marketplace?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {

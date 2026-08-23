@@ -38,11 +38,37 @@ interface GroupMessage {
   reactions?: { emoji: string; userId: string }[]
 }
 
-export function GroupChat({ group }: { group: any }) {
+interface IncomingGroupMessageRow {
+  id: string
+  room_id: string
+  user_id: string
+  text: string | null
+  created_at: string
+}
+
+interface GroupParticipant {
+  userId: string
+  isAdmin?: boolean
+  user?: {
+    name?: string
+    avatarUrl?: string | null
+    lastActiveAt?: string | null
+  }
+}
+
+export interface Group {
+  id: string
+  name?: string
+  description?: string | null
+  participants?: GroupParticipant[]
+}
+
+export function GroupChat({ group }: { group: Group }) {
   const [messages, setMessages] = useState<GroupMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [userId, setUserId] = useState("")
   const [showInfo, setShowInfo] = useState(false)
+  const [onlineCutoff] = useState(() => Date.now())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -68,10 +94,11 @@ export function GroupChat({ group }: { group: any }) {
           filter: `room_id=eq.${group.id}`,
         },
         (payload) => {
-          const newMsg = payload.new as any
+          const newMsg = payload.new as IncomingGroupMessageRow
+          if (newMsg.user_id === userId) return
           supabase
             .from("profiles")
-            .select("name, avatarUrl")
+            .select("name, avatar_url")
             .eq("id", newMsg.user_id)
             .single()
             .then(({ data: profile }) => {
@@ -79,10 +106,13 @@ export function GroupChat({ group }: { group: any }) {
                 ...prev,
                 {
                   ...newMsg,
+                  roomId: newMsg.room_id,
+                  userId: newMsg.user_id,
+                  createdAt: newMsg.created_at,
                   user: {
                     id: newMsg.user_id,
                     name: profile?.name || "Unknown",
-                    avatarUrl: profile?.avatarUrl || null,
+                    avatarUrl: profile?.avatar_url || null,
                   },
                 },
               ])
@@ -119,7 +149,7 @@ export function GroupChat({ group }: { group: any }) {
   }
 
   const currentUserParticipant = group.participants?.find(
-    (p: any) => p.userId === userId
+    (p: GroupParticipant) => p.userId === userId
   )
   const isCurrentUserAdmin = currentUserParticipant?.isAdmin || false
 
@@ -133,7 +163,7 @@ export function GroupChat({ group }: { group: any }) {
           >
             <ArrowLeft className="h-4 w-4 text-zinc-600" />
           </Link>
-          <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${getGroupColor(group.name)}`}>
+          <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${getGroupColor(group.name || "G")}`}>
             <span className="text-sm font-medium">
               {group.name?.charAt(0).toUpperCase() || "G"}
             </span>
@@ -157,7 +187,7 @@ export function GroupChat({ group }: { group: any }) {
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full py-16">
-              <div className={`h-16 w-16 rounded-full flex items-center justify-center mb-4 ${getGroupColor(group.name)}`}>
+              <div className={`h-16 w-16 rounded-full flex items-center justify-center mb-4 ${getGroupColor(group.name || "G")}`}>
                 <span className="text-2xl font-bold">
                   {group.name?.charAt(0).toUpperCase() || "G"}
                 </span>
@@ -248,7 +278,7 @@ export function GroupChat({ group }: { group: any }) {
           </div>
 
           <div className="p-4 flex flex-col items-center border-b border-zinc-100">
-            <div className={`h-20 w-20 rounded-full flex items-center justify-center mb-3 ${getGroupColor(group.name)}`}>
+            <div className={`h-20 w-20 rounded-full flex items-center justify-center mb-3 ${getGroupColor(group.name || "G")}`}>
               <span className="text-3xl font-bold">
                 {group.name?.charAt(0).toUpperCase() || "G"}
               </span>
@@ -267,7 +297,7 @@ export function GroupChat({ group }: { group: any }) {
               Members
             </h4>
             <div className="space-y-1">
-              {group.participants?.map((participant: any) => (
+              {group.participants?.map((participant) => (
                 <div
                   key={participant.userId}
                   className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-zinc-50"
@@ -292,7 +322,7 @@ export function GroupChat({ group }: { group: any }) {
                     <p className="text-xs text-zinc-400 truncate">
                       {participant.user?.lastActiveAt &&
                       new Date(participant.user.lastActiveAt).getTime() >
-                        Date.now() - 5 * 60 * 1000
+                        onlineCutoff - 5 * 60 * 1000
                         ? "Online"
                         : "Offline"}
                     </p>

@@ -6,15 +6,18 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date: string | Date) {
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return ""
   return new Intl.DateTimeFormat("en-KE", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(date))
+  }).format(d)
 }
 
 export function formatRelativeTime(date: string | Date) {
-  const now = new Date()
   const d = new Date(date)
+  if (isNaN(d.getTime())) return ""
+  const now = new Date()
   const diff = now.getTime() - d.getTime()
   const mins = Math.floor(diff / 60000)
   if (mins < 1) return "just now"
@@ -23,7 +26,7 @@ export function formatRelativeTime(date: string | Date) {
   if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days}d ago`
-  return formatDate(date)
+  return formatDate(d)
 }
 
 export function generateId() {

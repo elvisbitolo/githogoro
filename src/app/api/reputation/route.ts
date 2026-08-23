@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { ReputationAction } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
       prisma.reputationLog.create({
         data: {
           userId: user.id,
-          action: action as any,
+          action: action as ReputationAction,
           points,
           description: description || null,
         },

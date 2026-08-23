@@ -182,7 +182,6 @@ export default function NotificationsPage() {
   }, [])
 
   useEffect(() => {
-    setLoading(true)
     fetchNotifications()
   }, [fetchNotifications])
 

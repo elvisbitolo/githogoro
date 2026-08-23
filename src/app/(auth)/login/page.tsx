@@ -53,7 +53,7 @@ export default function LoginPage() {
     }
 
     const formattedPhone = "+254" + phone.slice(1)
-    const email = `${formattedPhone}@githogoro.connect`
+    const email = `${formattedPhone}@githogoro.app`
 
     const { error: loginError } = await supabase.auth.signInWithPassword({
       email,

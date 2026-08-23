@@ -1,23 +1,33 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: Request) {
   try {
-    const { subscription, userId } = await request.json()
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (!subscription || !userId) {
-      return NextResponse.json({ error: "Missing subscription or userId" }, { status: 400 })
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { subscription } = await request.json()
+
+    if (!subscription?.endpoint) {
+      return NextResponse.json({ error: "Missing subscription" }, { status: 400 })
     }
 
     await prisma.pushSubscription.upsert({
-      where: { userId },
+      where: { userId: user.id },
       update: {
         endpoint: subscription.endpoint,
         p256dh: subscription.keys?.p256dh || "",
         auth: subscription.keys?.auth || "",
       },
       create: {
-        userId,
+        userId: user.id,
         endpoint: subscription.endpoint,
         p256dh: subscription.keys?.p256dh || "",
         auth: subscription.keys?.auth || "",

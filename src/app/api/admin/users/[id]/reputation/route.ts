@@ -40,7 +40,7 @@ export async function PUT(
     prisma.reputationLog.create({
       data: {
         userId: id,
-        action: "post_created" as any,
+        action: "post_created",
         points,
         description: reason || `Admin adjustment: ${points >= 0 ? "+" : ""}${points} points`,
       },

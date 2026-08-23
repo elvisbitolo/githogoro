@@ -38,7 +38,6 @@ export default function BloodDonorsPage() {
   }, [supabase])
 
   useEffect(() => {
-    setLoading(true)
     const params = new URLSearchParams()
     if (filterType !== "all") params.set("bloodType", filterType)
 

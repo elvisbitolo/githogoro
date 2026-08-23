@@ -34,14 +34,14 @@ const JOB_TYPE_BADGE: Record<string, string> = {
   internship: "bg-pink-100 text-pink-700",
 }
 
-export default function JobsPageClient() {
-  const [jobs, setJobs] = useState<Job[]>([])
+export default function JobsPageClient({ initialJobs = [] }: { initialJobs?: Job[] }) {
+  const [jobs, setJobs] = useState<Job[]>(initialJobs)
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
   const [locationFilter, setLocationFilter] = useState("")
   const [sort, setSort] = useState("newest")
-  const [initialized, setInitialized] = useState(false)
+  const [initialized, setInitialized] = useState(initialJobs.length > 0)
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -63,7 +63,6 @@ export default function JobsPageClient() {
   }, [typeFilter, search, locationFilter, sort])
 
   useEffect(() => {
-    setLoading(true)
     fetchJobs()
   }, [fetchJobs])
 

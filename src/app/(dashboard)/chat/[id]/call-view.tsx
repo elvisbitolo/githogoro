@@ -6,19 +6,30 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Phone, PhoneOff, Video, VideoOff, Mic, MicOff,
-  Maximize2, Minimize2, X
+  Maximize2, Minimize2
 } from "lucide-react"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 interface CallViewProps {
   conversationId: string
   otherUser: { id: string; name: string; avatarUrl: string | null } | null
   isIncoming?: boolean
+  isVideoInit?: boolean
+  incomingOffer?: RTCSessionDescriptionInit | null
   onEnd: () => void
 }
 
-export function CallView({ conversationId, otherUser, isIncoming = false, onEnd }: CallViewProps) {
-  const [callState, setCallState] = useState<"ringing" | "connecting" | "active" | "ended">(isIncoming ? "ringing" : "ringing")
-  const [isVideo, setIsVideo] = useState(false)
+interface BroadcastPayload {
+  payload: {
+    userId?: string
+    answer?: RTCSessionDescriptionInit
+    candidate?: RTCIceCandidateInit
+  }
+}
+
+export function CallView({ conversationId, otherUser, isIncoming = false, isVideoInit = false, incomingOffer = null, onEnd }: CallViewProps) {
+  const [callState, setCallState] = useState<"ringing" | "connecting" | "active" | "ended">("ringing")
+  const [isVideo, setIsVideo] = useState(isVideoInit)
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOff, setIsVideoOff] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -29,7 +40,7 @@ export function CallView({ conversationId, otherUser, isIncoming = false, onEnd 
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
-  const channelRef = useRef<any>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const supabase = createClient()
@@ -39,6 +50,21 @@ export function CallView({ conversationId, otherUser, isIncoming = false, onEnd 
     const s = seconds % 60
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
   }
+
+  const endCall = useCallback(() => {
+    localStreamRef.current?.getTracks().forEach((t) => t.stop())
+    peerConnectionRef.current?.close()
+    if (timerRef.current) clearInterval(timerRef.current)
+
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "call-end",
+      payload: { userId },
+    })
+
+    setCallState("ended")
+    setTimeout(onEnd, 500)
+  }, [userId, onEnd])
 
   const createPeerConnection = useCallback(() => {
     const pc = new RTCPeerConnection({
@@ -76,7 +102,7 @@ export function CallView({ conversationId, otherUser, isIncoming = false, onEnd 
 
     peerConnectionRef.current = pc
     return pc
-  }, [userId])
+  }, [userId, endCall])
 
   const startCall = useCallback(async () => {
     try {
@@ -107,7 +133,7 @@ export function CallView({ conversationId, otherUser, isIncoming = false, onEnd 
       console.error("Failed to start call:", err)
       endCall()
     }
-  }, [isVideo, createPeerConnection, userId])
+  }, [isVideo, createPeerConnection, userId, endCall])
 
   const answerCall = useCallback(async (offer: RTCSessionDescriptionInit, callerIsVideo: boolean) => {
     try {
@@ -141,22 +167,7 @@ export function CallView({ conversationId, otherUser, isIncoming = false, onEnd 
       console.error("Failed to answer call:", err)
       endCall()
     }
-  }, [createPeerConnection, userId])
-
-  const endCall = useCallback(() => {
-    localStreamRef.current?.getTracks().forEach((t) => t.stop())
-    peerConnectionRef.current?.close()
-    if (timerRef.current) clearInterval(timerRef.current)
-
-    channelRef.current?.send({
-      type: "broadcast",
-      event: "call-end",
-      payload: { userId },
-    })
-
-    setCallState("ended")
-    setTimeout(onEnd, 500)
-  }, [userId, onEnd])
+  }, [createPeerConnection, userId, endCall])
 
   const toggleMute = () => {
     localStreamRef.current?.getAudioTracks().forEach((t) => { t.enabled = isMuted })
@@ -192,17 +203,17 @@ export function CallView({ conversationId, otherUser, isIncoming = false, onEnd 
     channelRef.current = channel
 
     channel
-      .on("broadcast", { event: "call-offer" }, (payload: any) => {
+      .on("broadcast", { event: "call-offer" }, (payload: BroadcastPayload) => {
         if (payload.payload.userId !== userId) {
           setCallState("ringing")
         }
       })
-      .on("broadcast", { event: "call-answer" }, (payload: any) => {
-        if (payload.payload.userId !== userId && peerConnectionRef.current) {
+      .on("broadcast", { event: "call-answer" }, (payload: BroadcastPayload) => {
+        if (payload.payload.userId !== userId && peerConnectionRef.current && payload.payload.answer) {
           peerConnectionRef.current.setRemoteDescription(payload.payload.answer)
         }
       })
-      .on("broadcast", { event: "ice-candidate" }, (payload: any) => {
+      .on("broadcast", { event: "ice-candidate" }, (payload: BroadcastPayload) => {
         if (payload.payload.userId !== userId && peerConnectionRef.current) {
           peerConnectionRef.current.addIceCandidate(payload.payload.candidate)
         }
@@ -213,7 +224,10 @@ export function CallView({ conversationId, otherUser, isIncoming = false, onEnd 
       .subscribe()
 
     if (!isIncoming) {
-      startCall()
+      const initCall = async () => {
+        await startCall()
+      }
+      void initCall()
     }
 
     return () => {
@@ -259,12 +273,51 @@ export function CallView({ conversationId, otherUser, isIncoming = false, onEnd 
           <div className="text-center">
             <h2 className="text-xl font-bold text-white">{otherUser?.name || "Unknown"}</h2>
             <p className="text-zinc-400 text-sm mt-1">
-              {callState === "ringing" && "Ringing..."}
+              {callState === "ringing" && (isIncoming ? "Incoming call..." : "Ringing...")}
               {callState === "connecting" && "Connecting..."}
               {callState === "active" && formatDuration(duration)}
               {callState === "ended" && "Call ended"}
             </p>
           </div>
+          {isIncoming && callState === "ringing" && (
+            <div className="flex items-center gap-4 mt-2">
+              <Button
+                onClick={() => incomingOffer && answerCall(incomingOffer, isVideo)}
+                size="icon"
+                className="h-16 w-16 rounded-full bg-emerald-500 hover:bg-emerald-600"
+              >
+                <Phone className="h-7 w-7 text-white" />
+              </Button>
+              <Button
+                onClick={endCall}
+                size="icon"
+                className="h-16 w-16 rounded-full bg-red-500 hover:bg-red-600"
+              >
+                <PhoneOff className="h-7 w-7 text-white" />
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Incoming video call accept bar */}
+      {isIncoming && callState === "ringing" && isVideo && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-2xl px-5 py-3">
+          <span className="text-white text-sm font-medium">{otherUser?.name || "Unknown"}</span>
+          <Button
+            onClick={() => incomingOffer && answerCall(incomingOffer, isVideo)}
+            size="icon"
+            className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600"
+          >
+            <Phone className="h-5 w-5 text-white" />
+          </Button>
+          <Button
+            onClick={endCall}
+            size="icon"
+            className="h-12 w-12 rounded-full bg-red-500 hover:bg-red-600"
+          >
+            <PhoneOff className="h-5 w-5 text-white" />
+          </Button>
         </div>
       )}
 

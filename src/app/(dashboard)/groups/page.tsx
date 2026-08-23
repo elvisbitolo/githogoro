@@ -26,12 +26,38 @@ function getGroupColor(name: string) {
   return groupColors[Math.abs(hash) % groupColors.length]
 }
 
+interface GroupMessage {
+  id: string
+  text: string | null
+  createdAt: string
+  user?: { name?: string }
+}
+
+interface Group {
+  id: string
+  name?: string
+  messages?: GroupMessage[]
+  participants?: unknown[]
+}
+
 export default function GroupsPage() {
-  const [groups, setGroups] = useState<any[]>([])
+  const [groups, setGroups] = useState<Group[]>([])
   const [userId, setUserId] = useState("")
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const supabase = createClient()
+
+  const fetchGroups = async () => {
+    try {
+      const res = await fetch("/api/groups")
+      const data = await res.json()
+      if (Array.isArray(data)) setGroups(data)
+    } catch (e) {
+      console.error("Failed to fetch groups:", e)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -58,18 +84,6 @@ export default function GroupsPage() {
       }
     })
   }, [])
-
-  const fetchGroups = async () => {
-    try {
-      const res = await fetch("/api/groups")
-      const data = await res.json()
-      if (Array.isArray(data)) setGroups(data)
-    } catch (e) {
-      console.error("Failed to fetch groups:", e)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filtered = groups.filter((g) => {
     if (!searchQuery.trim()) return true
@@ -145,7 +159,7 @@ export default function GroupsPage() {
                 <div className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors cursor-pointer border-b border-zinc-50">
                   <div className="h-12 w-12 rounded-full shrink-0 flex items-center justify-center">
                     <Avatar className="h-12 w-12">
-                      <AvatarFallback className={getGroupColor(group.name)}>
+                      <AvatarFallback className={getGroupColor(group.name || "G")}>
                         {group.name?.charAt(0).toUpperCase() || "G"}
                       </AvatarFallback>
                     </Avatar>

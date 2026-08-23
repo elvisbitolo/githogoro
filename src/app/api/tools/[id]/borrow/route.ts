@@ -18,17 +18,21 @@ export async function POST(
     if (!tool.isAvailable) return NextResponse.json({ error: "Tool is not available" }, { status: 400 })
     if (tool.userId === user.id) return NextResponse.json({ error: "Cannot borrow your own tool" }, { status: 400 })
 
+    const claimed = await prisma.toolListing.updateMany({
+      where: { id, isAvailable: true },
+      data: { isAvailable: false },
+    })
+
+    if (claimed.count === 0) {
+      return NextResponse.json({ error: "Tool is not available" }, { status: 400 })
+    }
+
     const borrow = await prisma.toolBorrow.create({
       data: {
         toolId: id,
         borrowerId: user.id,
         borrowDate: new Date(),
       },
-    })
-
-    await prisma.toolListing.update({
-      where: { id },
-      data: { isAvailable: false },
     })
 
     return NextResponse.json(borrow, { status: 201 })

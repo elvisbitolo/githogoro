@@ -11,6 +11,15 @@ export async function GET(
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const viewer = await prisma.profile.findUnique({
+      where: { id: user.id },
+      select: { zone: true },
+    })
+
     const post = await prisma.post.findUnique({
       where: { id },
       include: {
@@ -24,13 +33,28 @@ export async function GET(
             user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
-        likes: user
-          ? { where: { userId: user.id }, select: { type: true } }
-          : false,
+        likes: {
+          where: { userId: user.id },
+          select: { type: true },
+        },
       },
     })
 
     if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 })
+    }
+
+    if (post.privacy === "private" && post.userId !== user.id) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 })
+    }
+
+    if (
+      post.privacy === "neighbors" &&
+      post.userId !== user.id &&
+      viewer?.zone &&
+      post.user?.zone &&
+      viewer.zone !== post.user.zone
+    ) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 })
     }
 

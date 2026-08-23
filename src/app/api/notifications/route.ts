@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 
@@ -14,8 +15,17 @@ export async function GET(request: Request) {
     const cursor = searchParams.get("cursor")
     const limit = Math.min(parseInt(searchParams.get("limit") || String(PAGE_SIZE)), 50)
     const unreadOnly = searchParams.get("unread") === "true"
+    const countOnly = searchParams.get("countOnly") === "true"
 
-    const where: any = { userId: user.id }
+    const unreadCount = await prisma.notification.count({
+      where: { userId: user.id, isRead: false },
+    })
+
+    if (countOnly) {
+      return NextResponse.json({ count: unreadCount })
+    }
+
+    const where: Prisma.NotificationWhereInput = { userId: user.id }
     if (unreadOnly) where.isRead = false
     if (cursor) {
       const cursorNotification = await prisma.notification.findUnique({ where: { id: cursor } })
@@ -33,10 +43,6 @@ export async function GET(request: Request) {
     const hasMore = notifications.length > limit
     const items = hasMore ? notifications.slice(0, limit) : notifications
     const nextCursor = hasMore ? items[items.length - 1].id : null
-
-    const unreadCount = await prisma.notification.count({
-      where: { userId: user.id, isRead: false },
-    })
 
     return NextResponse.json({ notifications: items, nextCursor, hasMore, unreadCount })
   } catch (error) {

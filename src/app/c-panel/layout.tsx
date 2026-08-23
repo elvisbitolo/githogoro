@@ -16,7 +16,7 @@ export default function AdminLayout({
       try {
         const res = await fetch("/api/admin/verify")
         const data = await res.json()
-        if (data.isAdmin) {
+        if (data.isAdmin || data.isModerator) {
           setAuthorized(true)
         } else {
           router.replace("/")

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
+import { isConversationParticipant } from "@/lib/chat-access"
 
 export async function GET() {
   try {
@@ -42,6 +43,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "conversationId is required" }, { status: 400 })
     }
 
+    if (!(await isConversationParticipant(conversationId, user.id))) {
+      return NextResponse.json({ error: "You are not a participant of this conversation" }, { status: 403 })
+    }
+
     const pinned = await prisma.pinnedConversation.upsert({
       where: { conversationId_userId: { conversationId, userId: user.id } },
       update: {},
@@ -64,6 +69,10 @@ export async function DELETE(request: Request) {
     const { conversationId } = await request.json()
     if (!conversationId) {
       return NextResponse.json({ error: "conversationId is required" }, { status: 400 })
+    }
+
+    if (!(await isConversationParticipant(conversationId, user.id))) {
+      return NextResponse.json({ error: "You are not a participant of this conversation" }, { status: 403 })
     }
 
     await prisma.pinnedConversation.deleteMany({

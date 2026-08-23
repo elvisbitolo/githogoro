@@ -37,37 +37,34 @@ export async function POST(
     if (existingVote) {
       if (existingVote.type === type) {
         await prisma.bundleVote.delete({ where: { id: existingVote.id } })
-        await prisma.bundle.update({
+        const updated = await prisma.bundle.update({
           where: { id },
           data: type === "up" ? { upvotes: { decrement: 1 } } : { downvotes: { decrement: 1 } },
         })
-        const updated = await prisma.bundle.findUnique({ where: { id } })
-        return NextResponse.json({ upvotes: updated!.upvotes, downvotes: updated!.downvotes, voted: null })
+        return NextResponse.json({ upvotes: updated.upvotes, downvotes: updated.downvotes, voted: null })
       }
 
       await prisma.bundleVote.update({
         where: { id: existingVote.id },
         data: { type },
       })
-      await prisma.bundle.update({
+      const updated = await prisma.bundle.update({
         where: { id },
         data: type === "up"
           ? { upvotes: { increment: 1 }, downvotes: { decrement: 1 } }
           : { upvotes: { decrement: 1 }, downvotes: { increment: 1 } },
       })
-      const updated = await prisma.bundle.findUnique({ where: { id } })
-      return NextResponse.json({ upvotes: updated!.upvotes, downvotes: updated!.downvotes, voted: type })
+      return NextResponse.json({ upvotes: updated.upvotes, downvotes: updated.downvotes, voted: type })
     }
 
     await prisma.bundleVote.create({
       data: { bundleId: id, userId: user.id, type },
     })
-    await prisma.bundle.update({
+    const updated = await prisma.bundle.update({
       where: { id },
       data: type === "up" ? { upvotes: { increment: 1 } } : { downvotes: { increment: 1 } },
     })
-    const updated = await prisma.bundle.findUnique({ where: { id } })
-    return NextResponse.json({ upvotes: updated!.upvotes, downvotes: updated!.downvotes, voted: type })
+    return NextResponse.json({ upvotes: updated.upvotes, downvotes: updated.downvotes, voted: type })
   } catch (error) {
     console.error("POST /api/bundles/[id]/vote error:", error)
     return NextResponse.json({ error: "Failed to toggle vote" }, { status: 500 })

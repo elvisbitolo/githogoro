@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
+import { isChatRoomMember } from "@/lib/chat-access"
 
 export async function GET(request: Request) {
   try {
@@ -12,6 +13,10 @@ export async function GET(request: Request) {
     const roomId = searchParams.get("roomId")
     if (!roomId) {
       return NextResponse.json({ error: "roomId is required" }, { status: 400 })
+    }
+
+    if (!(await isChatRoomMember(roomId, user.id))) {
+      return NextResponse.json({ error: "You are not a member of this room" }, { status: 403 })
     }
 
     const polls = await prisma.chatPoll.findMany({
@@ -41,6 +46,10 @@ export async function POST(request: Request) {
     const { roomId, question, options, endsAt } = await request.json()
     if (!roomId || !question || !options?.length) {
       return NextResponse.json({ error: "roomId, question, and options are required" }, { status: 400 })
+    }
+
+    if (!(await isChatRoomMember(roomId, user.id))) {
+      return NextResponse.json({ error: "You are not a member of this room" }, { status: 403 })
     }
 
     const poll = await prisma.chatPoll.create({

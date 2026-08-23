@@ -16,9 +16,8 @@ export const metadata: Metadata = {
     template: "%s | Githogoro",
   },
   description:
-    "Githogoro is the #1 community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, join groups, buy & sell in the marketplace, get alerts, and connect with the Githogoro community near Runda and Northern Bypass.",
+    "Githogoro is the #1 community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, join groups, buy & sell in the marketplace, and get alerts near Runda and Northern Bypass.",
   keywords: [
-    "Githogoro",
     "Githogoro",
     "Githogoro community",
     "Githogoro Nairobi",
@@ -67,22 +66,22 @@ export const metadata: Metadata = {
     "Githogoro savings",
     "Githogoro group buy",
     "Githogoro petitions",
-    "githogoroconnect",
+    "githogoro",
   ],
-  authors: [{ name: "Githogoro", url: "https://githogoro.onrender.com" }],
+  authors: [{ name: "Githogoro", url: "https://githogoro.vercel.app" }],
   creator: "Githogoro",
   publisher: "Githogoro",
   openGraph: {
     type: "website",
     locale: "en_KE",
-    url: "https://githogoro.onrender.com",
+    url: "https://githogoro.vercel.app",
     siteName: "Githogoro",
     title: "Githogoro — Community App for Githogoro, Nairobi",
     description:
       "The #1 community app for Githogoro, Nairobi. Chat, jobs, businesses, marketplace, events, and more. Karibu Githogoro!",
     images: [
       {
-        url: "https://githogoro.onrender.com/og-image.png",
+        url: "https://githogoro.vercel.app/og-image.png",
         width: 1200,
         height: 630,
         alt: "Githogoro — Community App for Githogoro, Nairobi",
@@ -93,8 +92,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Githogoro — Community App for Githogoro, Nairobi",
     description:
-      "Chat, find jobs, discover businesses, and connect with your neighbors in Githogoro, Nairobi.",
-    images: ["https://githogoro.onrender.com/og-image.png"],
+      "Chat, find jobs, discover businesses, and stay connected with your neighbors in Githogoro, Nairobi.",
+    images: ["https://githogoro.vercel.app/og-image.png"],
   },
   manifest: "/manifest.json",
   icons: {
@@ -102,7 +101,7 @@ export const metadata: Metadata = {
     apple: "/icons/icon-192x192.png",
   },
   alternates: {
-    canonical: "https://githogoro.onrender.com",
+    canonical: "https://githogoro.vercel.app",
   },
   other: {
     "google-site-verification": "UKoNzw8c8iMUjQk56NbNTThfaz96V0GMdNM2Fatryz4",
@@ -128,9 +127,9 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "Githogoro",
-    url: "https://githogoro.onrender.com",
+    url: "https://githogoro.vercel.app",
     description:
-      "The #1 community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, join groups, buy & sell in the marketplace, and connect with the Githogoro community.",
+      "The #1 community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, join groups, buy & sell in the marketplace, and engage with the Githogoro community.",
     applicationCategory: "SocialNetworkingApplication",
     operatingSystem: "Web",
     offers: {
@@ -151,7 +150,7 @@ export default function RootLayout({
     author: {
       "@type": "Organization",
       name: "Githogoro",
-      url: "https://githogoro.onrender.com",
+      url: "https://githogoro.vercel.app",
     },
   }
 

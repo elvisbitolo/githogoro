@@ -58,8 +58,8 @@ export default function NewEventPage() {
 
       const data = await res.json()
       setCoverPhoto(data.url)
-    } catch (err: any) {
-      setError(err.message || "Failed to upload cover photo")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload cover photo")
     } finally {
       setUploading(false)
     }

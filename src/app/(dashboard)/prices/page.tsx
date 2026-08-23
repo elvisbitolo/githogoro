@@ -33,7 +33,6 @@ export default function PricesPage() {
     const params = new URLSearchParams()
     if (search) params.set("product", search)
 
-    setLoading(true)
     fetch(`/api/prices?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {

@@ -32,7 +32,7 @@ export default function NewTontinePage() {
         description: description || null,
         contributionAmount,
         frequency,
-        maxMembers: parseInt(maxMembers),
+        maxMembers: Math.max(2, Number(maxMembers) || 10),
       }),
     })
 

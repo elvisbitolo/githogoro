@@ -4,24 +4,17 @@ import { createClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const checkins = await prisma.mentalHealthCheckIn.findMany({
-      include: {
-        user: {
-          select: { id: true, name: true, avatarUrl: true },
-        },
-      },
+      where: { userId: user.id },
       orderBy: { createdAt: "desc" },
-      take: 100,
+      take: 50,
     })
 
-    const anonymized = checkins.map((c) => {
-      if (c.isAnonymous) {
-        return { ...c, user: { id: "anonymous", name: "Anonymous", avatarUrl: null } }
-      }
-      return c
-    })
-
-    return NextResponse.json(anonymized)
+    return NextResponse.json(checkins)
   } catch (error) {
     console.error("GET /api/health/mood error:", error)
     return NextResponse.json({ error: "Failed to fetch mood check-ins" }, { status: 500 })

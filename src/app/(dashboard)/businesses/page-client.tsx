@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Store, Phone, Star, MapPin, Search } from "lucide-react"
+import { Store, Phone, Star, Search } from "lucide-react"
 
 interface Business {
   id: string
@@ -33,6 +33,7 @@ export default function BusinessesPageClient() {
 
   const fetchBusinesses = useCallback(async () => {
     try {
+      setLoading(true)
       const params = new URLSearchParams()
       if (category !== "all") params.set("category", category)
       if (search) params.set("search", search)
@@ -48,7 +49,6 @@ export default function BusinessesPageClient() {
   }, [category, search])
 
   useEffect(() => {
-    setLoading(true)
     fetchBusinesses()
   }, [fetchBusinesses])
 

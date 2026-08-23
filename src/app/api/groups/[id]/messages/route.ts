@@ -9,6 +9,23 @@ export async function GET(
   try {
     const { id } = await params;
 
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const participant = await prisma.chatParticipant.findFirst({
+      where: { roomId: id, userId: user.id },
+    });
+
+    if (!participant) {
+      return NextResponse.json({ error: "Not a member of this group" }, { status: 403 });
+    }
+
     const messages = await prisma.message.findMany({
       where: { roomId: id },
       orderBy: { createdAt: "asc" },

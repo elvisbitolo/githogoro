@@ -30,12 +30,6 @@ export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
   const MAX_DURATION = 60
   const WARNING_DURATION = 50
 
-  useEffect(() => {
-    return () => {
-      cleanup()
-    }
-  }, [])
-
   const cleanup = () => {
     if (timerRef.current) {
       clearInterval(timerRef.current)
@@ -49,6 +43,12 @@ export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
       URL.revokeObjectURL(audioURL)
     }
   }
+
+  useEffect(() => {
+    return () => {
+      cleanup()
+    }
+  }, [])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -65,6 +65,17 @@ export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
       return false
     }
   }
+
+  const stopRecording = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop()
+    }
+  }, [])
 
   const startRecording = useCallback(async () => {
     const micAvailable = await checkMicrophone()
@@ -123,18 +134,7 @@ export function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
       setHasMicrophone(false)
       setState("unsupported")
     }
-  }, [])
-
-  const stopRecording = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-      timerRef.current = null
-    }
-
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop()
-    }
-  }, [])
+  }, [stopRecording])
 
   const cancelRecording = useCallback(() => {
     if (timerRef.current) {

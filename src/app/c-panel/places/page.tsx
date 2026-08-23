@@ -35,16 +35,19 @@ export default function AdminPlacesPage() {
     variant: "destructive" | "default"
   }>({ open: false, title: "", description: "", action: () => {}, variant: "default" })
 
-  useEffect(() => {
-    fetchPlaces()
-  }, [])
-
   const fetchPlaces = async () => {
     const res = await fetch("/api/admin/places")
     const data = await res.json()
     setPlaces(data)
     setLoading(false)
   }
+
+  useEffect(() => {
+    async function load() {
+      await fetchPlaces()
+    }
+    load()
+  }, [])
 
   const unapproved = places.filter((p) => !p.isApproved)
 

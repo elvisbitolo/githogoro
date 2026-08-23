@@ -7,11 +7,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ArrowLeft, Search, MessageCircle, Users } from "lucide-react"
 import Link from "next/link"
+import type { Profile } from "@/types"
 
 export default function NewChatPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [profiles, setProfiles] = useState<any[]>([])
+  const [profiles, setProfiles] = useState<Profile[]>([])
   const [myId, setMyId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -33,7 +34,7 @@ export default function NewChatPage() {
       if (cancelled) return
       const data = res.ok ? await res.json() : []
       if (Array.isArray(data)) {
-        setProfiles(data.filter((p: any) => p.id !== user.id))
+        setProfiles(data.filter((p: Profile) => p.id !== user.id))
       }
       setLoading(false)
     }
@@ -126,7 +127,7 @@ export default function NewChatPage() {
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors text-left disabled:opacity-50"
               >
                 <Avatar className="h-12 w-12 shrink-0">
-                  <AvatarImage src={profile.avatarUrl} />
+                  <AvatarImage src={profile.avatarUrl || undefined} />
                   <AvatarFallback className="bg-emerald-100 text-emerald-700">
                     {(profile.name || "?").charAt(0).toUpperCase()}
                   </AvatarFallback>

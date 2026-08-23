@@ -13,11 +13,66 @@ import {
 import Link from "next/link"
 import { formatRelativeTime } from "@/lib/utils"
 import { CallView } from "./call-view"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 const EMOJI_LIST = ["😀","😂","😍","🥰","😎","🤩","😭","🥺","🔥","💯","👍","❤️","🎉","🤔","😢","🙏","💪","🤝","👏","✅","⭐","📌","🎵","📸","💡"]
 
-export function DMView({ conversation }: { conversation: any }) {
-  const [messages, setMessages] = useState<any[]>([])
+interface ConversationUser {
+  userId?: string
+  name?: string
+  avatarUrl?: string | null
+  lastActiveAt?: string | null
+}
+
+interface ConversationParticipant {
+  userId: string
+  user?: ConversationUser
+}
+
+interface Conversation {
+  id: string
+  participants?: ConversationParticipant[]
+}
+
+interface ConversationMessage {
+  id: string
+  text: string | null
+  senderId: string
+  sender?: { id: string; name?: string; avatarUrl?: string | null }
+  replyToId?: string | null
+  reactions?: { emoji: string }[]
+  createdAt?: string
+  readAt?: string | null
+  isStarred?: boolean
+  isDeleted?: boolean
+  isEdited?: boolean
+  type?: string
+  mediaUrl?: string | null
+}
+
+interface PrivateMessageRow {
+  id: string
+  conversation_id: string
+  sender_id: string
+  text: string | null
+  type: string
+  media_url: string | null
+  reply_to_id: string | null
+  is_starred: boolean
+  is_deleted: boolean
+  is_edited: boolean
+  created_at: string
+  read_at: string | null
+}
+
+interface CallOfferPayload {
+  userId?: string
+  offer?: RTCSessionDescriptionInit | null
+  isVideo?: boolean
+}
+
+export function DMView({ conversation }: { conversation: Conversation }) {
+  const [messages, setMessages] = useState<ConversationMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [userId, setUserId] = useState("")
   const [loading, setLoading] = useState(true)
@@ -25,21 +80,25 @@ export function DMView({ conversation }: { conversation: any }) {
   const [showMenu, setShowMenu] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [replyTo, setReplyTo] = useState<any>(null)
-  const [editingMsg, setEditingMsg] = useState<any>(null)
+  const [replyTo, setReplyTo] = useState<ConversationMessage | null>(null)
+  const [editingMsg, setEditingMsg] = useState<ConversationMessage | null>(null)
   const [typing, setTyping] = useState(false)
   const [otherTyping, setOtherTyping] = useState(false)
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set())
   const [showStarred, setShowStarred] = useState(false)
   const [showCall, setShowCall] = useState(false)
   const [callType, setCallType] = useState<"audio" | "video">("audio")
+  const [isIncoming, setIsIncoming] = useState(false)
+  const [incomingOffer, setIncomingOffer] = useState<RTCSessionDescriptionInit | null>(null)
+  const [onlineCutoff] = useState(() => Date.now())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
   const supabase = createClient()
 
   const otherParticipant = conversation?.participants?.find(
-    (p: any) => p.userId !== userId
+    (p: ConversationParticipant) => p.userId !== userId
   )?.user
 
   useEffect(() => {
@@ -57,7 +116,7 @@ export function DMView({ conversation }: { conversation: any }) {
       .then((data) => {
         if (Array.isArray(data)) {
           setMessages(data)
-          const starred = new Set(data.filter((m: any) => m.isStarred).map((m: any) => m.id))
+          const starred = new Set(data.filter((m: ConversationMessage) => m.isStarred).map((m) => m.id))
           setStarredIds(starred)
         }
         setLoading(false)
@@ -75,12 +134,17 @@ export function DMView({ conversation }: { conversation: any }) {
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          const newMsg = payload.new as any
-          if (newMsg.senderId !== userId) {
-            setMessages((prev) => [...prev, newMsg])
-            // Mark as read
-            fetch(`/api/conversations/${conversation.id}/read`, { method: "POST" })
+          const raw = payload.new as PrivateMessageRow
+          if (raw.sender_id === userId) return
+          const newMsg = {
+            ...raw,
+            senderId: raw.sender_id,
+            createdAt: raw.created_at,
+            readAt: raw.read_at,
           }
+          setMessages((prev) => [...prev, newMsg])
+          // Mark as read
+          fetch(`/api/conversations/${conversation.id}/read`, { method: "POST" })
         }
       )
       .on(
@@ -92,7 +156,13 @@ export function DMView({ conversation }: { conversation: any }) {
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          const updated = payload.new as any
+          const raw = payload.new as PrivateMessageRow
+          const updated = {
+            ...raw,
+            senderId: raw.sender_id,
+            createdAt: raw.created_at,
+            readAt: raw.read_at,
+          }
           setMessages((prev) =>
             prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m))
           )
@@ -106,10 +176,31 @@ export function DMView({ conversation }: { conversation: any }) {
       })
       .subscribe()
 
+    channelRef.current = channel
+
     return () => {
       supabase.removeChannel(channel)
     }
   }, [conversation.id])
+
+  // Incoming call detection
+  useEffect(() => {
+    if (!userId) return
+    const callChannel = supabase.channel(`call:${conversation.id}`)
+    callChannel
+      .on("broadcast", { event: "call-offer" }, (payload: { payload: CallOfferPayload }) => {
+        if (payload.payload?.userId && payload.payload.userId !== userId) {
+          setIncomingOffer(payload.payload.offer || null)
+          setCallType(payload.payload.isVideo ? "video" : "audio")
+          setIsIncoming(true)
+          setShowCall(true)
+        }
+      })
+      .subscribe()
+    return () => {
+      supabase.removeChannel(callChannel)
+    }
+  }, [userId, conversation.id, supabase])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -118,7 +209,7 @@ export function DMView({ conversation }: { conversation: any }) {
   const handleTyping = useCallback(() => {
     if (!typing) {
       setTyping(true)
-      supabase.channel(`dm:${conversation.id}`).send({
+      channelRef.current?.send({
         type: "broadcast",
         event: "typing",
         payload: { userId },
@@ -132,7 +223,7 @@ export function DMView({ conversation }: { conversation: any }) {
     e.preventDefault()
     if (!newMessage.trim() || !userId) return
 
-    const body: any = { text: newMessage.trim() }
+    const body: { text: string; replyToId?: string; editId?: string } = { text: newMessage.trim() }
     if (replyTo) {
       body.replyToId = replyTo.id
       setReplyTo(null)
@@ -185,9 +276,9 @@ export function DMView({ conversation }: { conversation: any }) {
     )
   }
 
-  const editMessage = (msg: any) => {
+  const editMessage = (msg: ConversationMessage) => {
     setEditingMsg(msg)
-    setNewMessage(msg.text)
+    setNewMessage(msg.text ?? "")
     inputRef.current?.focus()
   }
 
@@ -201,7 +292,7 @@ export function DMView({ conversation }: { conversation: any }) {
     : messages
 
   const isOnline = otherParticipant?.lastActiveAt &&
-    new Date(otherParticipant.lastActiveAt).getTime() > Date.now() - 5 * 60 * 1000
+    new Date(otherParticipant.lastActiveAt).getTime() > onlineCutoff - 5 * 60 * 1000
 
   return (
     <div className="flex flex-col h-[calc(100dvh-4rem)] lg:h-dvh bg-zinc-50">
@@ -211,7 +302,7 @@ export function DMView({ conversation }: { conversation: any }) {
           <ArrowLeft className="h-5 w-5 text-zinc-600" />
         </Link>
         <Avatar className="h-9 w-9">
-          <AvatarImage src={otherParticipant?.avatarUrl} />
+          <AvatarImage src={otherParticipant?.avatarUrl || undefined} />
           <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700">
             {(otherParticipant?.name || "?").charAt(0).toUpperCase()}
           </AvatarFallback>
@@ -320,7 +411,7 @@ export function DMView({ conversation }: { conversation: any }) {
                 <div className={`flex gap-1.5 max-w-[80%] sm:max-w-[70%] ${isOwn ? "flex-row-reverse" : ""}`}>
                   {!isOwn && (
                     <Avatar className={`h-7 w-7 shrink-0 ${showAvatar ? "visible" : "invisible"}`}>
-                      <AvatarImage src={msg.sender?.avatarUrl} />
+                      <AvatarImage src={msg.sender?.avatarUrl || undefined} />
                       <AvatarFallback className="text-[10px] bg-emerald-100 text-emerald-700">
                         {(msg.sender?.name || "?").charAt(0).toUpperCase()}
                       </AvatarFallback>
@@ -364,7 +455,7 @@ export function DMView({ conversation }: { conversation: any }) {
 
                       <div className={`flex items-center gap-1.5 mt-1 ${isOwn ? "justify-end" : "justify-start"}`}>
                         <span className={`text-[10px] ${isOwn ? "text-emerald-200" : "text-zinc-400"}`}>
-                          {formatRelativeTime(msg.createdAt)}
+                          {formatRelativeTime(msg.createdAt || "")}
                         </span>
                         {isOwn && (
                           msg.readAt ? (
@@ -382,7 +473,7 @@ export function DMView({ conversation }: { conversation: any }) {
                     {/* Reactions */}
                     {reactions.length > 0 && (
                       <div className={`flex gap-0.5 mt-0.5 flex-wrap ${isOwn ? "justify-end" : ""}`}>
-                        {reactions.map((r: any, ri: number) => (
+                        {reactions.map((r: { emoji: string }, ri: number) => (
                           <span key={ri} className="text-xs bg-white border border-zinc-200 rounded-full px-1.5 py-0.5 shadow-sm cursor-pointer hover:bg-zinc-50">
                             {r.emoji}
                           </span>
@@ -525,9 +616,12 @@ export function DMView({ conversation }: { conversation: any }) {
           otherUser={otherParticipant ? {
             id: otherParticipant.userId || "",
             name: otherParticipant.name || "Unknown",
-            avatarUrl: otherParticipant.avatarUrl,
+            avatarUrl: otherParticipant.avatarUrl ?? null,
           } : null}
-          onEnd={() => setShowCall(false)}
+          isIncoming={isIncoming}
+          isVideoInit={callType === "video"}
+          incomingOffer={incomingOffer}
+          onEnd={() => { setShowCall(false); setIsIncoming(false); setIncomingOffer(null) }}
         />
       )}
     </div>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { verifyAdmin } from "@/lib/admin-guard"
+import { verifyModerator } from "@/lib/admin-guard"
 import { createNotification } from "@/lib/notifications"
 import { prisma } from "@/lib/prisma"
 
@@ -7,7 +7,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await verifyAdmin()
+  const auth = await verifyModerator()
   if ("error" in auth) return auth.error
 
   const { id } = await params

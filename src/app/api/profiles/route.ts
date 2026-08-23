@@ -38,8 +38,10 @@ export async function GET(request: Request) {
         bio: true,
         role: true,
         isVerified: true,
+        phone: true,
         createdAt: true,
         lastSeen: true,
+        lastActiveAt: true,
       },
     });
 

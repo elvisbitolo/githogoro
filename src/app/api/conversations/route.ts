@@ -54,7 +54,13 @@ export async function GET() {
     }));
 
     // Sort: pinned first, then by last message time
-    conversations.sort((a: any, b: any) => {
+    type ConversationSortable = {
+      isPinned: boolean;
+      createdAt: Date;
+      messages?: { createdAt: Date }[];
+    };
+
+    conversations.sort((a: ConversationSortable, b: ConversationSortable) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
       const aTime = a.messages?.[0]?.createdAt || a.createdAt;

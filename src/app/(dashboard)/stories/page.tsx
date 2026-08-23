@@ -6,6 +6,14 @@ import { createClient } from "@/lib/supabase/client"
 import StoryViewer from "./story-viewer"
 import StoryCreator from "./story-creator"
 
+interface Status {
+  id: string
+  content: string
+  mediaUrl: string | null
+  createdAt: string
+  user: { id: string; name: string; avatarUrl: string | null }
+}
+
 interface StatusUser {
   user: { id: string; name: string; avatarUrl: string | null }
   statuses: {
@@ -17,7 +25,7 @@ interface StatusUser {
 }
 
 export default function StoriesPage() {
-  const [statuses, setStatuses] = useState<any[]>([])
+  const [statuses, setStatuses] = useState<Status[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showCreator, setShowCreator] = useState(false)
@@ -46,7 +54,10 @@ export default function StoriesPage() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) setCurrentUserId(data.user.id)
     })
-    fetchStatuses()
+    async function load() {
+      await fetchStatuses()
+    }
+    load()
   }, [supabase, fetchStatuses])
 
   const groupedByUser = statuses.reduce<StatusUser[]>((acc, status) => {

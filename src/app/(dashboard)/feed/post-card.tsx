@@ -18,6 +18,7 @@ import {
   Trash2,
 } from "lucide-react"
 import { formatRelativeTime, cn } from "@/lib/utils"
+import { ReportButton } from "@/components/report-button"
 
 interface PostAuthor {
   id: string
@@ -224,6 +225,14 @@ export function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
                     >
                       Copy link
                     </button>
+                    <ReportButton
+                      targetType="post"
+                      targetId={post.id}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 text-left"
+                      onClickCloseMenu={() => setShowMenu(false)}
+                    >
+                      Report post
+                    </ReportButton>
                   </div>
                 </>
               )}

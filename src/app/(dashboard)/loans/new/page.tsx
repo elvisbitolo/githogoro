@@ -28,10 +28,7 @@ export default function NewLoanPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!search || search.length < 2) {
-      setUsers([])
-      return
-    }
+    if (!search || search.length < 2) return
     const timer = setTimeout(() => {
       fetch(`/api/profiles?search=${encodeURIComponent(search)}`)
         .then((res) => res.json())
@@ -114,7 +111,7 @@ export default function NewLoanPage() {
                       className="flex h-10 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-3 py-2 text-sm text-zinc-900 ring-offset-white placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 transition-colors"
                     />
                   </div>
-                  {users.length > 0 && (
+                  {search.length >= 2 && users.length > 0 && (
                     <div className="border border-zinc-200 rounded-xl mt-1 max-h-48 overflow-y-auto">
                       {users.map((u) => (
                         <button

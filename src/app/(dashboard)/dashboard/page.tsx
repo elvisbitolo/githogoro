@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { AdminAccessDot } from "@/components/admin-access-dot"
 import {
-  MessageSquare,
   Briefcase,
   Users,
   Bell,
@@ -17,7 +16,6 @@ import {
   MapPin,
   Clock,
   GraduationCap,
-  Heart,
   Newspaper,
   ExternalLink,
   Cloud,
@@ -27,12 +25,12 @@ import {
   Sparkles,
   MessageCircle,
   Phone,
-  Star,
   Shield,
   Store,
   TrendingUp,
-  Zap,
   BookOpen,
+  Landmark,
+  ChevronRight,
 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "@/lib/i18n/context"
@@ -42,11 +40,6 @@ interface DashboardStats {
   jobs: number
   users: number
   alerts: number
-}
-
-interface UserProfile {
-  id: string
-  createdAt: string
 }
 
 interface ActivityItem {
@@ -72,6 +65,23 @@ interface NearbyResident {
   avatarUrl: string | null
   isVerified: boolean
   role: string
+  lastActiveAt: string | null
+}
+
+interface JobRow {
+  id: string
+  title: string
+  createdAt: string
+}
+
+interface AlertRow {
+  id: string
+  title: string
+  createdAt: string
+}
+
+interface ProfileRow {
+  id: string
   lastActiveAt: string | null
 }
 
@@ -122,13 +132,11 @@ function getDailyQuote() {
   return DAILY_QUOTES[dayOfYear % DAILY_QUOTES.length]
 }
 
-function getWeatherIcon(condition: string) {
-  switch (condition) {
-    case "sunny": return Sun
-    case "cloudy": return Cloud
-    case "rainy": return CloudRain
-    default: return CloudSun
-  }
+const WEATHER_ICONS: Record<string, typeof Sun> = {
+  sunny: Sun,
+  cloudy: Cloud,
+  rainy: CloudRain,
+  default: CloudSun,
 }
 
 export default function DashboardPage() {
@@ -140,28 +148,37 @@ export default function DashboardPage() {
   const [partnerNews, setPartnerNews] = useState<PartnerNews[]>([])
   const [nearbyResidents, setNearbyResidents] = useState<NearbyResident[]>([])
   const [loading, setLoading] = useState(true)
-  const [weather, setWeather] = useState<{ temp: number; condition: string; humidity: number }>({ temp: 24, condition: "sunny", humidity: 65 })
+  const [weather] = useState<{ temp: number; condition: string; humidity: number }>({ temp: 24, condition: "sunny", humidity: 65 })
   const [quote] = useState(getDailyQuote)
-  const [myId, setMyId] = useState("")
+  const [onlineCutoff] = useState(() => Date.now() - 5 * 60 * 1000)
+  const myIdRef = useRef("")
   const [isNewUser, setIsNewUser] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUserName(data.user.user_metadata?.name || data.user.email?.split("@")[0] || "")
-        setMyId(data.user.id)
-      }
-    })
+    let cancelled = false
 
-    Promise.all([
-      fetch("/api/profiles/me").then((res) => (res.ok ? res.json() : null)),
-      fetch("/api/admin/stats").then((res) => (res.ok ? res.json() : null)),
-      fetch("/api/jobs").then((res) => (res.ok ? res.json() : null)),
-      fetch("/api/alerts").then((res) => (res.ok ? res.json() : null)),
-      fetch("/api/partners").then((res) => (res.ok ? res.json() : null)),
-      fetch("/api/profiles").then((res) => (res.ok ? res.json() : null)),
-    ]).then(([myProfile, statsData, jobsData, alertsData, partnersData, profilesData]) => {
+    async function init() {
+      const { data } = await supabase.auth.getUser()
+      if (data.user) {
+        myIdRef.current = data.user.id
+        if (!cancelled) {
+          setUserName(data.user.user_metadata?.name || data.user.email?.split("@")[0] || "")
+        }
+      }
+
+      const [myProfile, statsData, publicStats, jobsData, alertsData, partnersData, profilesData] = await Promise.all([
+        fetch("/api/profiles/me").then((res) => (res.ok ? res.json() : null)),
+        fetch("/api/admin/stats").then((res) => (res.ok ? res.json() : null)),
+        fetch("/api/stats").then((res) => (res.ok ? res.json() : null)),
+        fetch("/api/jobs").then((res) => (res.ok ? res.json() : null)),
+        fetch("/api/alerts").then((res) => (res.ok ? res.json() : null)),
+        fetch("/api/partners").then((res) => (res.ok ? res.json() : null)),
+        fetch("/api/profiles").then((res) => (res.ok ? res.json() : null)),
+      ])
+
+      if (cancelled) return
+
       let userIsNew = false
       if (myProfile?.createdAt) {
         const profileCreated = new Date(myProfile.createdAt).getTime()
@@ -169,18 +186,17 @@ export default function DashboardPage() {
         userIsNew = profileCreated > twentyFourHoursAgo
         setIsNewUser(userIsNew)
       }
-      if (statsData) {
-        setStats({
-          messages: myProfile?.stats?.messagesSent ?? 0,
-          jobs: statsData.jobs || 0,
-          users: statsData.users || 0,
-          alerts: statsData.alerts || 0,
-        })
-      }
+      const alertList = alertsData?.alerts ?? (Array.isArray(alertsData) ? alertsData : [])
+      setStats({
+        messages: myProfile?.stats?.messagesSent ?? 0,
+        jobs: statsData?.jobs ?? publicStats?.jobs ?? 0,
+        users: statsData?.users ?? publicStats?.residents ?? 0,
+        alerts: Array.isArray(alertList) ? alertList.length : 0,
+      })
       if (jobsData) {
         const jobs = Array.isArray(jobsData) ? jobsData : []
         setRecentJobs(jobs.slice(0, 4))
-        const jobActivities: ActivityItem[] = jobs.slice(0, 2).map((job: any) => ({
+        const jobActivities: ActivityItem[] = jobs.slice(0, 2).map((job: JobRow) => ({
           id: job.id,
           type: "job",
           title: `New job: ${job.title}`,
@@ -189,25 +205,22 @@ export default function DashboardPage() {
         }))
         setActivities((prev) => [...prev, ...jobActivities])
       }
-      if (alertsData) {
-        const alertList = alertsData?.alerts ?? (Array.isArray(alertsData) ? alertsData : [])
-        const alertActivities: ActivityItem[] = alertList.slice(0, 2).map((alert: any) => ({
-          id: alert.id,
-          type: "alert",
-          title: `Alert: ${alert.title}`,
-          timestamp: alert.createdAt,
-          href: "/alerts",
-        }))
-        setActivities((prev) => [...prev, ...alertActivities])
-      }
+      const alertActivities: ActivityItem[] = alertList.slice(0, 2).map((alert: AlertRow) => ({
+        id: alert.id,
+        type: "alert",
+        title: `Alert: ${alert.title}`,
+        timestamp: alert.createdAt,
+        href: "/alerts",
+      }))
+      setActivities((prev) => [...prev, ...alertActivities])
       if (partnersData?.items) {
         setPartnerNews(partnersData.items.slice(0, 3))
       }
       if (Array.isArray(profilesData)) {
         setNearbyResidents(
           profilesData
-            .filter((p: any) => p.id !== myId)
-            .sort((a: any, b: any) => {
+            .filter((p: ProfileRow) => p.id !== myIdRef.current)
+            .sort((a: ProfileRow, b: ProfileRow) => {
               if (a.lastActiveAt && !b.lastActiveAt) return -1
               if (!a.lastActiveAt && b.lastActiveAt) return 1
               return new Date(b.lastActiveAt || 0).getTime() - new Date(a.lastActiveAt || 0).getTime()
@@ -216,23 +229,31 @@ export default function DashboardPage() {
         )
       }
       setLoading(false)
-    }).catch(() => setLoading(false))
+    }
+
+    init().catch(() => {
+      if (!cancelled) setLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
   }, [supabase])
 
-  const quickActions = [
-    { label: "Post Job", icon: Briefcase, href: "/jobs/new", color: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" },
-    { label: "Create Event", icon: Calendar, href: "/events/new", color: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" },
-    { label: "Report Place", icon: MapPin, href: "/map", color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" },
-    { label: "Invite Friend", icon: Users, href: "/invite", color: "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100" },
-    { label: "Sell Item", icon: Store, href: "/marketplace/new", color: "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100" },
-    { label: "Start Chat", icon: MessageCircle, href: "/chat/new", color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" },
+  const quickServices = [
+    { label: "Post Job", desc: "Post a job for the community", icon: Briefcase, href: "/jobs/new", chip: "bg-amber-50 text-amber-700", glow: "shadow-[0_0_20px_rgba(245,158,11,0.15)]" },
+    { label: "Create Event", desc: "Share an upcoming event", icon: Calendar, href: "/events/new", chip: "bg-blue-50 text-blue-700", glow: "shadow-[0_0_20px_rgba(59,130,246,0.15)]" },
+    { label: "Report Place", desc: "Add a place to the live map", icon: MapPin, href: "/map", chip: "bg-emerald-50 text-emerald-700", glow: "shadow-[0_0_20px_rgba(16,185,129,0.15)]" },
+    { label: "Invite Friend", desc: "Invite a neighbor to join", icon: Users, href: "/invite", chip: "bg-violet-50 text-violet-700", glow: "shadow-[0_0_20px_rgba(139,92,246,0.15)]" },
+    { label: "Sell Item", desc: "List an item on the marketplace", icon: Store, href: "/marketplace/new", chip: "bg-orange-50 text-orange-700", glow: "shadow-[0_0_20px_rgba(249,115,22,0.15)]" },
+    { label: "Start Chat", desc: "Message neighbors in your zone", icon: MessageCircle, href: "/chat/new", chip: "bg-sky-50 text-sky-700", glow: "shadow-[0_0_20px_rgba(14,165,233,0.15)]" },
   ]
 
   const sortedActivities = [...activities]
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 5)
 
-  const WeatherIcon = getWeatherIcon(weather.condition)
+  const WeatherIcon = WEATHER_ICONS[weather.condition] || WEATHER_ICONS.default
 
   if (loading) {
     return (
@@ -330,17 +351,17 @@ export default function DashboardPage() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-3 mb-6">
         {[
           { label: t.dashboard.activeJobs, value: stats.jobs, icon: Briefcase, href: "/jobs", color: "text-amber-600", bg: "bg-amber-50" },
           { label: "Community", value: stats.users, icon: Users, href: "/people", color: "text-blue-600", bg: "bg-blue-50" },
           { label: t.dashboard.alerts, value: stats.alerts, icon: Bell, href: "/alerts", color: "text-red-600", bg: "bg-red-50" },
         ].map((item) => (
-          <Link key={item.label} href={item.href}>
-            <Card className="hover:shadow-md transition-all duration-200 cursor-pointer group">
-              <CardContent className="p-4 sm:p-5">
-                <div className={`h-9 w-9 rounded-lg ${item.bg} flex items-center justify-center mb-3`}>
-                  <item.icon className={`h-4 w-4 ${item.color}`} />
+          <Link key={item.label} href={item.href} className="group rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
+            <Card className="border-zinc-200 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:border-zinc-300 hover:shadow-lg hover:shadow-zinc-900/5 cursor-pointer active:scale-[0.98]">
+              <CardContent className="p-4">
+                <div className={`h-10 w-10 rounded-xl ${item.bg} flex items-center justify-center mb-2.5 shadow-[0_0_18px_rgba(0,0,0,0.06)] group-hover:scale-110 transition-transform duration-200`}>
+                  <item.icon className={`h-5 w-5 ${item.color}`} />
                 </div>
                 <div className="text-2xl font-bold text-zinc-900">{item.value}</div>
                 <div className="text-sm text-zinc-500">{item.label}</div>
@@ -350,18 +371,32 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <h2 className="text-sm font-semibold text-zinc-700 mb-3">Quick Actions</h2>
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-6">
-        {quickActions.map((action) => (
-          <Link key={action.label} href={action.href}>
-            <Button
-              variant="outline"
-              className={`w-full justify-start gap-2 h-auto py-3 border ${action.color} transition-all duration-200`}
-            >
-              <action.icon className="h-4 w-4" />
-              <span className="text-xs font-medium">{action.label}</span>
-            </Button>
+      {/* Quick Services */}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-zinc-700">Quick Services</h2>
+        <span className="text-xs text-zinc-400 hidden sm:inline">Everything you need</span>
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        {quickServices.map((service) => (
+          <Link
+            key={service.label}
+            href={service.href}
+            className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+          >
+            <Card className="h-full border-zinc-200 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:border-zinc-300 hover:shadow-lg hover:shadow-zinc-900/5 cursor-pointer active:scale-[0.98]">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`h-10 w-10 rounded-xl ${service.chip} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${service.glow}`}>
+                      <service.icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-zinc-900 truncate">{service.label}</h3>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-zinc-400 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-emerald-600 sm:opacity-0 sm:group-hover:opacity-100" />
+                </div>
+                <p className="text-xs text-zinc-500 leading-relaxed">{service.desc}</p>
+              </CardContent>
+            </Card>
           </Link>
         ))}
       </div>
@@ -425,7 +460,7 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 {nearbyResidents.map((resident) => {
                   const isOnline = resident.lastActiveAt &&
-                    new Date(resident.lastActiveAt).getTime() > Date.now() - 5 * 60 * 1000
+                    new Date(resident.lastActiveAt).getTime() > onlineCutoff
                   return (
                     <div key={resident.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50 transition-colors">
                       <div className="relative">
@@ -560,6 +595,36 @@ export default function DashboardPage() {
                 View All Partners
               </Button>
             </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Leadership Spotlight */}
+      <Card className="mb-6 border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
+              <Landmark className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900">Meet Your MCA Aspirant</h3>
+              <p className="text-xs text-zinc-500">Karura Ward · 2027</p>
+            </div>
+          </div>
+          <p className="text-sm text-zinc-600 mb-3">
+            <strong>Austine Omondi</strong> — founder of Brilliant Angels CBO and MCA aspirant for Karura Ward 2027, committed to progressive leadership, quality education support, environmental sustainability, and youth empowerment.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a href="https://austine-omondi.vercel.app" target="_blank" rel="noopener noreferrer">
+              <Button size="sm" className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs">
+                <ExternalLink className="h-3 w-3" /> Visit Campaign Site
+              </Button>
+            </a>
+            <a href="https://austine-omondi.vercel.app/manifesto" target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="outline" className="gap-1.5 text-xs">
+                <BookOpen className="h-3 w-3" /> Read Manifesto
+              </Button>
+            </a>
           </div>
         </CardContent>
       </Card>

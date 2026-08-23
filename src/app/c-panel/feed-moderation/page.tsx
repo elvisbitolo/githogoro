@@ -33,16 +33,19 @@ export default function FeedModerationPage() {
     open: false, post: null,
   })
 
-  useEffect(() => {
-    fetchPosts()
-  }, [])
-
   const fetchPosts = async () => {
     const res = await fetch("/api/admin/posts?limit=50")
     const data = await res.json()
     if (Array.isArray(data)) setPosts(data)
     setLoading(false)
   }
+
+  useEffect(() => {
+    async function load() {
+      await fetchPosts()
+    }
+    load()
+  }, [])
 
   const filtered = posts.filter(
     (p) =>

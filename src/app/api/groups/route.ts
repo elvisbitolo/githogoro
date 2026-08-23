@@ -37,9 +37,14 @@ export async function GET() {
       },
     });
 
+    type GroupSortable = {
+      createdAt: Date;
+      messages?: { createdAt: Date }[];
+    };
+
     const groups = participations
       .map((p) => p.room)
-      .sort((a: any, b: any) => {
+      .sort((a: GroupSortable, b: GroupSortable) => {
         const aTime = a.messages?.[0]?.createdAt || a.createdAt;
         const bTime = b.messages?.[0]?.createdAt || b.createdAt;
         return new Date(bTime).getTime() - new Date(aTime).getTime();

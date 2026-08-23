@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 
 const NEWS_URL = "https://brilliant-angel-cbo.vercel.app/news"
 
+const AUSTINE_URL = "https://austine-omondi.vercel.app"
+
 interface NewsItem {
   title: string
   description: string
@@ -48,12 +50,38 @@ const hardcodedNews: NewsItem[] = [
   },
 ]
 
+const partners = [
+  {
+    id: "brilliant-angels",
+    name: "Brilliant Angels Academy",
+    description: "Community-Based Organisation transforming lives in Githogoro through education, environmental stewardship, youth empowerment, and community development since 2018.",
+    category: "education",
+    contactPhone: "+254796595995",
+    contactEmail: "brilliantangelacademy@gmail.com",
+    website: "https://brilliant-angel-cbo.vercel.app",
+    location: "Githogoro Slums, Westlands, Nairobi",
+    isVerified: true,
+  },
+  {
+    id: "austine-omondi",
+    name: "Austine Omondi",
+    description: "MCA Aspirant, Karura Ward 2027 and founder of Brilliant Angels CBO — championing progressive leadership, quality education support, environmental sustainability, and youth empowerment across Karura Ward.",
+    category: "leadership",
+    contactPhone: "+254796595995",
+    contactEmail: "austineomondi2020@gmail.com",
+    website: AUSTINE_URL,
+    location: "Karura Ward, Westlands, Nairobi",
+    isVerified: true,
+  },
+]
+
 export async function GET() {
   return NextResponse.json({
     partner: "Brilliant Angels Academy",
     url: "https://brilliant-angel-cbo.vercel.app",
     newsUrl: NEWS_URL,
     lastSynced: new Date().toISOString(),
+    partners,
     items: hardcodedNews,
   })
 }

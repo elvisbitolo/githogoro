@@ -23,6 +23,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   business: "#10b981",
 }
 
+interface PlaceData {
+  id: string
+  name: string
+  category: string
+  description?: string | null
+  lat: number
+  lng: number
+  phone?: string | null
+  is_official?: boolean
+}
+
 export default function MapPage() {
   const [places, setPlaces] = useState<Place[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,13 +54,16 @@ export default function MapPage() {
 
       if (Array.isArray(placesData)) {
         for (const p of placesData) {
+          const lat = Number(p.lat)
+          const lng = Number(p.lng)
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
           allPlaces.push({
             id: p.id,
             name: p.name,
             category: p.category,
             description: p.description ?? undefined,
-            lat: p.lat,
-            lng: p.lng,
+            lat,
+            lng,
             phone: p.phone ?? undefined,
             isOfficial: p.is_official ?? false,
           })
@@ -58,13 +72,16 @@ export default function MapPage() {
 
       if (Array.isArray(businessesData)) {
         for (const b of businessesData) {
+          const lat = Number(b.locationLat)
+          const lng = Number(b.locationLng)
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
           allPlaces.push({
             id: b.id,
             name: b.name,
             category: b.category,
             description: b.description ?? undefined,
-            lat: b.locationLat!,
-            lng: b.locationLng!,
+            lat,
+            lng,
             phone: b.phone ?? undefined,
             isOfficial: true,
           })
@@ -155,22 +172,29 @@ export default function MapPage() {
           setLoading(true)
           fetch("/api/places")
             .then((res) => res.ok ? res.json() : [])
-            .then((data: any[]) => {
+            .then((data: PlaceData[]) => {
               if (Array.isArray(data)) {
                 setPlaces((prev) => {
                   const existingIds = new Set(prev.map((p) => p.id))
                   const newPlaces: Place[] = data
                     .filter((p) => !existingIds.has(p.id))
-                    .map((p) => ({
-                      id: p.id,
-                      name: p.name,
-                      category: p.category,
-                      description: p.description ?? undefined,
-                      lat: p.lat,
-                      lng: p.lng,
-                      phone: p.phone ?? undefined,
-                      isOfficial: p.is_official ?? false,
-                    }))
+                    .map((p): Place | null => {
+                      const lat = Number(p.lat)
+                      const lng = Number(p.lng)
+                      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+                      const place: Place = {
+                        id: p.id,
+                        name: p.name,
+                        category: p.category,
+                        lat,
+                        lng,
+                        isOfficial: p.is_official ?? false,
+                      }
+                      if (p.description) place.description = p.description
+                      if (p.phone) place.phone = p.phone
+                      return place
+                    })
+                    .filter((p): p is Place => p !== null)
                   return [...prev, ...newPlaces]
                 })
               }

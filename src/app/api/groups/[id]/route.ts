@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
@@ -87,7 +88,7 @@ export async function PATCH(
     const body = await request.json();
     const { name, description, addMemberIds, removeMemberIds } = body;
 
-    const updates: any = {};
+    const updates: Prisma.ChatRoomUpdateInput = {};
     if (name !== undefined) updates.name = name.trim();
     if (description !== undefined) updates.description = description?.trim() || null;
 

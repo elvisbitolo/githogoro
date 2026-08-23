@@ -27,11 +27,35 @@ function getGradient(id: string) {
   return GRADIENTS[Math.abs(hash) % GRADIENTS.length]
 }
 
+interface EventAttendee {
+  id: string
+  status: string
+  name: string
+  avatarUrl: string | null
+}
+
+interface EventDetail {
+  id: string
+  title: string
+  description: string | null
+  date: string
+  location: string
+  category: string
+  coverPhoto: string | null
+  isFree: boolean
+  ticketPrice: number | null
+  maxAttendees: number | null
+  createdBy: string
+  creator?: { id: string; name: string; avatarUrl: string | null }
+  attendees?: EventAttendee[]
+  rsvpCounts?: { going: number; maybe: number; notGoing: number }
+}
+
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const supabase = createClient()
-  const [event, setEvent] = useState<any>(null)
+  const [event, setEvent] = useState<EventDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [userRsvp, setUserRsvp] = useState<string | null>(null)
@@ -57,7 +81,12 @@ export default function EventDetailPage() {
     setLoading(false)
   }, [id])
 
-  useEffect(() => { fetchEvent() }, [fetchEvent])
+  useEffect(() => {
+    async function load() {
+      await fetchEvent()
+    }
+    load()
+  }, [fetchEvent])
 
   useEffect(() => {
     if (userId && id) {
@@ -130,9 +159,9 @@ export default function EventDetailPage() {
   const date = new Date(event.date)
   const isUpcoming = date >= new Date()
   const isCreator = userId === event.createdBy
-  const goingAttendees = event.attendees?.filter((a: any) => a.status === "going") || []
-  const maybeAttendees = event.attendees?.filter((a: any) => a.status === "maybe") || []
-  const notGoingAttendees = event.attendees?.filter((a: any) => a.status === "not_going") || []
+  const goingAttendees = event.attendees?.filter((a) => a.status === "going") || []
+  const maybeAttendees = event.attendees?.filter((a) => a.status === "maybe") || []
+  const notGoingAttendees = event.attendees?.filter((a) => a.status === "not_going") || []
 
   return (
     <div className="min-h-[calc(100dvh-4rem)] lg:min-h-dvh bg-white">
@@ -323,7 +352,7 @@ export default function EventDetailPage() {
               Going ({goingAttendees.length})
             </h2>
             <div className="flex flex-wrap gap-2">
-              {goingAttendees.map((a: any) => (
+              {goingAttendees.map((a) => (
                 <div key={a.id} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50">
                   <Avatar className="h-5 w-5">
                     <AvatarImage src={a.avatarUrl || undefined} />
@@ -344,7 +373,7 @@ export default function EventDetailPage() {
               Maybe ({maybeAttendees.length})
             </h2>
             <div className="flex flex-wrap gap-2">
-              {maybeAttendees.map((a: any) => (
+              {maybeAttendees.map((a) => (
                 <div key={a.id} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50">
                   <Avatar className="h-5 w-5">
                     <AvatarImage src={a.avatarUrl || undefined} />
@@ -365,7 +394,7 @@ export default function EventDetailPage() {
               Can&apos;t Go ({notGoingAttendees.length})
             </h2>
             <div className="flex flex-wrap gap-2">
-              {notGoingAttendees.map((a: any) => (
+              {notGoingAttendees.map((a) => (
                 <div key={a.id} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100">
                   <Avatar className="h-5 w-5">
                     <AvatarImage src={a.avatarUrl || undefined} />

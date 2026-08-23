@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { verifyAdmin } from "@/lib/admin-guard"
+import { verifyModerator } from "@/lib/admin-guard"
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await verifyAdmin()
+  const auth = await verifyModerator()
   if ("error" in auth) return auth.error
 
   const { id } = await params

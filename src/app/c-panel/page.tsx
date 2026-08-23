@@ -165,6 +165,10 @@ export default function AdminPanelPage() {
                 <span className="flex items-center gap-2"><Shield className="h-4 w-4 text-emerald-400" /> Moderation Queue</span>
                 <span className="text-zinc-500">→</span>
               </Link>
+              <Link href="/c-panel/reports" className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 text-sm hover:bg-zinc-800 transition-colors">
+                <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-400" /> Reports</span>
+                <span className="text-zinc-500">→</span>
+              </Link>
               <Link href="/c-panel/places" className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 text-sm hover:bg-zinc-800 transition-colors">
                 <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-pink-400" /> Place Approvals</span>
                 <span className="text-zinc-500">→</span>

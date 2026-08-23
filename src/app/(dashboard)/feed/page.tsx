@@ -43,7 +43,6 @@ export default function FeedPage() {
 
   const fetchPosts = useCallback(async (cursor?: string | null) => {
     if (cursor) setLoadingMore(true)
-    else setLoading(true)
 
     try {
       const params = new URLSearchParams()
@@ -69,7 +68,10 @@ export default function FeedPage() {
   }, [])
 
   useEffect(() => {
-    fetchPosts()
+    async function load() {
+      await fetchPosts()
+    }
+    load()
   }, [fetchPosts])
 
   useEffect(() => {

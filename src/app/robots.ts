@@ -13,6 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/api/stats",
       },
     ],
-    sitemap: "https://githogoro.onrender.com/sitemap.xml",
+    sitemap: "https://githogoro.vercel.app/sitemap.xml",
   }
 }

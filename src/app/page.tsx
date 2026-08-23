@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { MessageSquare, Briefcase, MapPin, Store, Video, Calendar, Shield, Smartphone, ChevronRight } from "lucide-react"
+import { MessageSquare, Briefcase, MapPin, Store, Video, Calendar, Shield, ChevronRight, UserPlus, MessageCircle, HeartHandshake } from "lucide-react"
 import { LanguageToggle } from "@/components/LanguageToggle"
 import { useTranslations } from "@/lib/i18n/context"
 
 const icons = { MessageSquare, Briefcase, MapPin, Store, Video, Calendar, Shield }
+const stepIcons = { UserPlus, MessageCircle, HeartHandshake }
+const FOOTER_YEAR = new Date().getFullYear()
 
 interface Stats {
   residents: number
@@ -40,6 +42,12 @@ export default function LandingPage() {
     { label: t.landing.statActive, value: stats.activeUsers > 0 ? stats.activeUsers.toLocaleString() : "500+" },
   ]
 
+  const steps = [
+    { icon: "UserPlus" as const, title: t.landing.step1Title, desc: t.landing.step1Desc },
+    { icon: "MessageCircle" as const, title: t.landing.step2Title, desc: t.landing.step2Desc },
+    { icon: "HeartHandshake" as const, title: t.landing.step3Title, desc: t.landing.step3Desc },
+  ]
+
   return (
     <div className="flex flex-col min-h-dvh">
       {/* Navigation */}
@@ -70,41 +78,39 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden text-white">
-        <div className="absolute inset-0">
-          <Image
-            src="/image.png"
-            alt=""
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-emerald-900/85 via-emerald-800/80 to-emerald-700/85" />
-        </div>
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:py-32 relative">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-sm text-emerald-100 mb-6">
-              <Smartphone className="h-4 w-4" />
-              {t.landing.karibu}
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
+      <section className="relative overflow-hidden text-white max-sm:min-h-[85vh]">
+          <div className="absolute inset-0">
+            <Image
+              src="/image.png"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/60 via-emerald-900/25 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/50 via-transparent to-black/5" />
+          </div>
+        <div className="mx-auto max-w-6xl px-4 pt-56 min-[420px]:pt-64 sm:pt-72 pb-24 sm:pb-28 relative">
+          <div className="max-w-2xl mx-auto flex flex-col items-center text-center">
+            <h1 className="text-3xl min-[420px]:text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6 [text-shadow:0_2px_8px_rgba(0,0,0,0.45)] text-balance">
               {t.landing.hero}{" "}
-              <span className="text-amber-400">{t.landing.community}</span>
+              <span className="text-amber-400 whitespace-nowrap">{t.landing.community}</span>
             </h1>
-            <p className="text-lg sm:text-xl text-emerald-100/80 max-w-lg mb-8 leading-relaxed">
+            <p className="text-lg sm:text-xl text-emerald-100/80 max-w-lg max-sm:max-w-[22rem] mb-8 leading-relaxed [text-shadow:0_1px_4px_rgba(0,0,0,0.5)] text-pretty">
               {t.landing.heroDesc}
             </p>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col min-[380px]:flex-row gap-3 min-[380px]:gap-4 w-full min-[380px]:w-auto max-w-[20rem] min-[380px]:max-w-none mx-auto">
               <Link
                 href="/signup"
-                className="inline-flex h-12 items-center justify-center rounded-xl bg-amber-500 px-8 text-base font-semibold text-white hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/25"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-amber-500 px-8 text-base font-semibold text-white hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/25 w-full min-[380px]:w-auto"
               >
-                {t.nav.joinFree}
+                {t.nav.signUp}
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
                 href="/login"
-                className="inline-flex h-12 items-center justify-center rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm px-8 text-base font-medium text-white hover:bg-white/20 transition-all"
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm px-8 text-base font-medium text-white hover:bg-white/20 transition-all w-full min-[380px]:w-auto"
               >
                 {t.nav.signIn}
               </Link>
@@ -139,15 +145,45 @@ export default function LandingPage() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="group rounded-2xl border border-zinc-100 bg-white p-6 hover:shadow-lg hover:border-emerald-100 transition-all duration-300"
+                className="group rounded-2xl border border-zinc-100 bg-white p-6 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5 hover:border-emerald-100 transition-all duration-300"
               >
-                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4 group-hover:bg-emerald-700 transition-colors">
+                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4 group-hover:bg-emerald-700 group-hover:scale-110 transition-all duration-300">
                   {(() => { const Icon = icons[feature.icon]; return <Icon className="h-6 w-6 text-emerald-700 group-hover:text-white transition-colors" /> })()}
                 </div>
                 <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
                 <p className="text-zinc-500 text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-20 sm:py-28 bg-gradient-to-b from-white to-emerald-50/40">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t.landing.stepsTitle}</h2>
+            <p className="text-zinc-500 max-w-lg mx-auto">{t.landing.stepsDesc}</p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-10 sm:gap-8">
+            {steps.map((step, i) => {
+              const Icon = stepIcons[step.icon]
+              return (
+                <div key={step.title} className="relative text-center">
+                  {i < 2 && (
+                    <div className="hidden sm:block absolute top-7 left-[calc(50%+3.5rem)] w-[calc(100%-7rem)] border-t-2 border-dashed border-emerald-200" />
+                  )}
+                  <div className="relative inline-flex h-14 w-14 rounded-2xl bg-emerald-700 text-white items-center justify-center shadow-lg shadow-emerald-700/25 mb-5">
+                    <Icon className="h-6 w-6" />
+                    <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-amber-500 text-xs font-bold flex items-center justify-center shadow">
+                      {i + 1}
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
+                  <p className="text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto">{step.desc}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -177,7 +213,7 @@ export default function LandingPage() {
       <footer className="border-t border-zinc-200 bg-white py-8">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <p className="text-sm text-zinc-400">
-            &copy; {new Date().getFullYear()} {t.site.name}. {t.landing.footer}
+            &copy; {FOOTER_YEAR} {t.site.name}. {t.landing.footer}
           </p>
         </div>
       </footer>

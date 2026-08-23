@@ -7,11 +7,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Search, Users, Check, X } from "lucide-react"
 import Link from "next/link"
+import type { Profile } from "@/types"
 
 export default function NewGroupPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [profiles, setProfiles] = useState<any[]>([])
+  const [profiles, setProfiles] = useState<Profile[]>([])
   const [userId, setUserId] = useState("")
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -36,7 +37,7 @@ export default function NewGroupPage() {
       if (cancelled) return
       const data = res.ok ? await res.json() : []
       if (Array.isArray(data)) {
-        setProfiles(data.filter((p: any) => p.id !== user.id))
+        setProfiles(data.filter((p: Profile) => p.id !== user.id))
       }
       setLoading(false)
     }

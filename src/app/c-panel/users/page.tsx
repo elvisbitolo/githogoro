@@ -1,14 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import {
   Shield, ArrowLeft, Search, Trash2, CheckCircle, XCircle, ChevronDown,
-  Loader2, Eye, Star, Award, MessageSquare, Briefcase, Calendar,
+  Loader2, Eye, Star, Award, MessageSquare, Briefcase, Calendar, ShieldBan,
 } from "lucide-react"
 import Link from "next/link"
 import {
@@ -21,6 +20,8 @@ interface Profile {
   phone: string
   role: string
   isVerified: boolean
+  isBanned: boolean
+  banReason: string | null
   reputationScore: number
   reputationPoints: number
   zone: string | null
@@ -66,6 +67,9 @@ export default function AdminUsersPage() {
   }>({ open: false, title: "", description: "", action: () => {}, variant: "default" })
 
   const [roleMenu, setRoleMenu] = useState<string | null>(null)
+  const [banDialog, setBanDialog] = useState<{ open: boolean; user: Profile | null; reason: string }>({
+    open: false, user: null, reason: "",
+  })
   const [inspector, setInspector] = useState<{ open: boolean; data: UserActivity | null; loading: boolean }>({
     open: false, data: null, loading: false,
   })
@@ -74,15 +78,17 @@ export default function AdminUsersPage() {
   })
 
   useEffect(() => {
-    fetchProfiles()
+    let cancelled = false
+    ;(async () => {
+      const res = await fetch("/api/admin/users")
+      const data = await res.json()
+      if (!cancelled) {
+        if (Array.isArray(data)) setProfiles(data)
+        setLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
   }, [])
-
-  const fetchProfiles = async () => {
-    const res = await fetch("/api/admin/users")
-    const data = await res.json()
-    if (Array.isArray(data)) setProfiles(data)
-    setLoading(false)
-  }
 
   const filtered = profiles.filter(
     (p) =>
@@ -128,6 +134,30 @@ export default function AdminUsersPage() {
         setProfiles((prev) =>
           prev.map((p) => (p.id === user.id ? { ...p, role: newRole } : p))
         )
+      }
+    } finally {
+      setUpdating(null)
+    }
+  }
+
+  const handleToggleBan = async (user: Profile, banned: boolean) => {
+    setUpdating(user.id)
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/ban`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ banned, reason: banDialog.reason }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed" }))
+        alert(`Error: ${err.error || "Failed to update ban status"}`)
+      } else {
+        setProfiles((prev) =>
+          prev.map((p) =>
+            p.id === user.id ? { ...p, isBanned: banned, banReason: banned ? banDialog.reason.trim() || null : null } : p
+          )
+        )
+        setBanDialog({ open: false, user: null, reason: "" })
       }
     } finally {
       setUpdating(null)
@@ -197,6 +227,7 @@ export default function AdminUsersPage() {
   const roleColor = (role: string) => {
     switch (role) {
       case "admin": return "bg-red-500/20 text-red-400 border-red-500/30"
+      case "moderator": return "bg-amber-500/20 text-amber-400 border-amber-500/30"
       case "business": return "bg-purple-500/20 text-purple-400 border-purple-500/30"
       default: return "bg-blue-500/20 text-blue-400 border-blue-500/30"
     }
@@ -250,6 +281,9 @@ export default function AdminUsersPage() {
                     {p.isVerified && (
                       <Badge variant="default" className="h-5 text-[10px] bg-emerald-600">Verified</Badge>
                     )}
+                    {p.isBanned && (
+                      <Badge variant="destructive" className="h-5 text-[10px]">Banned</Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 text-sm text-zinc-500">
                     <span>{p.phone}</span>
@@ -292,7 +326,7 @@ export default function AdminUsersPage() {
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setRoleMenu(null)} />
                             <div className="absolute right-0 top-full mt-1 z-50 w-36 rounded-xl bg-zinc-800 border border-zinc-700 shadow-xl py-1">
-                              {["resident", "business", "admin"].map((role) => (
+                              {["resident", "business", "moderator", "admin"].map((role) => (
                                 <button
                                   key={role}
                                   onClick={() => handleChangeRole(p, role)}
@@ -316,6 +350,14 @@ export default function AdminUsersPage() {
                         ) : (
                           <CheckCircle className="h-4 w-4 text-emerald-400" />
                         )}
+                      </button>
+
+                      <button
+                        onClick={() => p.isBanned ? handleToggleBan(p, false) : setBanDialog({ open: true, user: p, reason: "" })}
+                        className="rounded-lg border border-zinc-800 p-1.5 hover:bg-red-900/30 hover:border-red-900/50 transition-colors"
+                        title={p.isBanned ? "Unban user" : "Ban user"}
+                      >
+                        <ShieldBan className={`h-4 w-4 ${p.isBanned ? "text-emerald-400" : "text-red-400"}`} />
                       </button>
 
                       <button
@@ -448,9 +490,43 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Reputation Dialog */}
-      <Dialog open={repDialog.open} onOpenChange={(open) => setRepDialog((d) => ({ ...d, open }))}>
+      {/* Ban User Dialog */}
+      <Dialog open={banDialog.open} onOpenChange={(open) => setBanDialog((d) => ({ ...d, open }))}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-red-400 flex items-center gap-2">
+              <ShieldBan className="h-5 w-5" /> Ban User
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-zinc-400">
+              Ban <strong className="text-zinc-200">{banDialog.user?.name}</strong>? They will not be able to
+              use the app until the ban is lifted.
+            </p>
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Reason (visible to user)</label>
+              <textarea
+                value={banDialog.reason}
+                onChange={(e) => setBanDialog((d) => ({ ...d, reason: e.target.value }))}
+                placeholder="e.g. Repeatedly posting inappropriate content"
+                rows={3}
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setBanDialog({ open: false, user: null, reason: "" })}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={() => banDialog.user && handleToggleBan(banDialog.user, true)}>
+                Ban User
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reputation Dialog */}
+      <Dialog open={repDialog.open} onOpenChange={(open) => setRepDialog((d) => ({ ...d, open }))}>        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Star className="h-5 w-5 text-amber-400" /> Adjust Reputation

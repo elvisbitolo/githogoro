@@ -13,6 +13,7 @@ import {
   Shield,
   Dumbbell,
   Stethoscope,
+  Landmark,
   ArrowLeft,
 } from "lucide-react"
 import Link from "next/link"
@@ -35,6 +36,7 @@ const iconMap: Record<string, React.ElementType> = {
   environment: Leaf,
   sports: Dumbbell,
   youth: Users,
+  leadership: Landmark,
   default: Shield,
 }
 
@@ -43,6 +45,7 @@ const colorMap: Record<string, { bg: string; text: string; border: string }> = {
   health: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" },
   environment: { bg: "bg-green-50", text: "text-green-600", border: "border-green-200" },
   sports: { bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-200" },
+  leadership: { bg: "bg-violet-50", text: "text-violet-600", border: "border-violet-200" },
   default: { bg: "bg-zinc-50", text: "text-zinc-600", border: "border-zinc-200" },
 }
 
@@ -58,6 +61,17 @@ const fallbackPartners = [
     location: "Githogoro Slums, Westlands, Nairobi",
     isVerified: true,
   },
+  {
+    id: "fallback-2",
+    name: "Austine Omondi",
+    description: "MCA Aspirant, Karura Ward 2027 and founder of Brilliant Angels CBO — championing progressive leadership, quality education support, environmental sustainability, and youth empowerment across Karura Ward.",
+    category: "leadership",
+    contactPhone: "+254796595995",
+    contactEmail: "austineomondi2020@gmail.com",
+    website: "https://austine-omondi.vercel.app",
+    location: "Karura Ward, Westlands, Nairobi",
+    isVerified: true,
+  },
 ]
 
 export default function PartnersPage() {
@@ -66,10 +80,10 @@ export default function PartnersPage() {
 
   useEffect(() => {
     fetch("/api/partners")
-      .then((res) => res.ok ? res.json() : [])
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setPartners(data)
+        if (Array.isArray(data?.partners) && data.partners.length > 0) {
+          setPartners(data.partners)
         } else {
           setPartners(fallbackPartners)
         }
@@ -96,7 +110,7 @@ export default function PartnersPage() {
           <h1 className="text-2xl font-bold text-zinc-900">Community Partners</h1>
         </div>
         <p className="text-sm text-zinc-500">
-          Organisations making a difference in Githogoro. Support them, volunteer, or connect.
+          Organisations and leaders making a difference in Githogoro. Support them, volunteer, or get involved.
         </p>
       </div>
 
@@ -171,7 +185,7 @@ export default function PartnersPage() {
       <Card className="mt-8 border-dashed border-2 border-zinc-200">
         <CardContent className="p-6 text-center">
           <p className="text-sm text-zinc-500 mb-2">
-            Want to list your organisation as a community partner?
+            Want to list your organisation or leadership as a community partner?
           </p>
           <p className="text-xs text-zinc-400">
             Contact us through the app or email us to get verified and listed.

@@ -41,16 +41,19 @@ export default function AdminBusinessesPage() {
     open: false, business: null,
   })
 
-  useEffect(() => {
-    fetchBusinesses()
-  }, [])
-
   const fetchBusinesses = async () => {
     const res = await fetch("/api/admin/businesses")
     const data = await res.json()
     if (Array.isArray(data)) setBusinesses(data)
     setLoading(false)
   }
+
+  useEffect(() => {
+    async function load() {
+      await fetchBusinesses()
+    }
+    load()
+  }, [])
 
   const filtered = businesses.filter(
     (b) =>

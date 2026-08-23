@@ -4,9 +4,22 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { DMView } from "./dm-view"
 
+interface Conversation {
+  id: string
+  participants?: Array<{
+    userId: string
+    user?: {
+      userId?: string
+      name?: string
+      avatarUrl?: string | null
+      lastActiveAt?: string | null
+    }
+  }>
+}
+
 export default function ConversationPage() {
   const { id } = useParams<{ id: string }>()
-  const [conversation, setConversation] = useState<any>(null)
+  const [conversation, setConversation] = useState<Conversation | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

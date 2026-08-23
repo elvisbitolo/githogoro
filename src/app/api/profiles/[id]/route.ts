@@ -40,11 +40,18 @@ export async function GET(
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    // If viewing another user's profile, hide phone number
+    // If viewing another user's profile, hide phone and reputation details
     const isOwnProfile = user.id === id;
     const safeProfile = isOwnProfile
       ? profile
-      : { ...profile, phone: null };
+      : {
+          ...profile,
+          phone: null,
+          lastSeen: null,
+          reputationScore: null,
+          reputationPoints: null,
+          badges: null,
+        };
 
     return NextResponse.json(safeProfile);
   } catch (error) {

@@ -41,7 +41,6 @@ export default function BundlesPage() {
   const supabase = createClient()
 
   const fetchBundles = useCallback(async () => {
-    setLoading(true)
     const params = new URLSearchParams()
     if (activeProvider !== "all") params.set("provider", activeProvider)
     if (search) params.set("search", search)
@@ -53,7 +52,10 @@ export default function BundlesPage() {
   }, [activeProvider, search])
 
   useEffect(() => {
-    fetchBundles()
+    async function load() {
+      await fetchBundles()
+    }
+    load()
   }, [fetchBundles])
 
   useEffect(() => {

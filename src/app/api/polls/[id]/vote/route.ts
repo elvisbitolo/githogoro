@@ -64,8 +64,8 @@ export async function POST(
     });
 
     return NextResponse.json(vote, { status: 201 });
-  } catch (error: any) {
-    if (error?.code === "P2002") {
+  } catch (error) {
+    if ((error as { code?: string })?.code === "P2002") {
       return NextResponse.json({ message: "Already voted" });
     }
     console.error("POST /api/polls/[id]/vote error:", error);

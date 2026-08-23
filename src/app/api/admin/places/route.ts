@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { verifyAdmin } from "@/lib/admin-guard"
+import { verifyModerator } from "@/lib/admin-guard"
 
 export async function GET() {
-  const auth = await verifyAdmin()
+  const auth = await verifyModerator()
   if ("error" in auth) return auth.error
 
   try {

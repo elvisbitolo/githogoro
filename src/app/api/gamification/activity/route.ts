@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import type { ReputationAction } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 
@@ -10,7 +11,6 @@ const ACTIVITY_POINTS: Record<string, number> = {
   harambee_donated: 25,
   errand_completed: 10,
   alert_posted: 5,
-  referral: 50,
   daily_login: 5,
 }
 
@@ -20,11 +20,12 @@ const ACTION_MAP: Record<string, string> = {
   event_attended: "event_organized",
   skill_shared: "skill_posted",
   harambee_donated: "harambee_donated",
-  errand_completed: "message_sent",
+  errand_completed: "post_created",
   alert_posted: "place_reported",
-  referral: "bundle_shared",
   daily_login: "poll_voted",
 }
+
+const DAILY_POINTS_CAP = 100
 
 export async function POST(request: Request) {
   try {
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const body = await request.json()
-    const { type, points: customPoints } = body
+    const { type } = body
 
     if (!type || !ACTIVITY_POINTS[type]) {
       return NextResponse.json(
@@ -45,13 +46,29 @@ export async function POST(request: Request) {
       )
     }
 
-    const points = customPoints ?? ACTIVITY_POINTS[type]
+    const points = ACTIVITY_POINTS[type]
     const action = ACTION_MAP[type] || "post_created"
+
+    const startOfDay = new Date()
+    startOfDay.setHours(0, 0, 0, 0)
+
+    const todayLogs = await prisma.reputationLog.findMany({
+      where: { userId: user.id, createdAt: { gte: startOfDay } },
+      select: { points: true },
+    })
+    const todayPoints = todayLogs.reduce((sum, l) => sum + l.points, 0)
+
+    if (todayPoints + points > DAILY_POINTS_CAP) {
+      return NextResponse.json(
+        { error: `Daily reputation point limit of ${DAILY_POINTS_CAP} reached` },
+        { status: 429 }
+      )
+    }
 
     const log = await prisma.reputationLog.create({
       data: {
         userId: user.id,
-        action: action as any,
+        action: action as ReputationAction,
         points,
         description: type,
       },

@@ -1,19 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 
 export function usePushNotifications() {
-  const [permission, setPermission] = useState<NotificationPermission>("default")
-  const [supported, setSupported] = useState(false)
+  const [permission, setPermission] = useState<NotificationPermission>(() =>
+    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default"
+  )
+  const [supported] = useState(
+    () => typeof window !== "undefined" && "Notification" in window && "serviceWorker" in navigator
+  )
   const supabase = createClient()
-
-  useEffect(() => {
-    if ("Notification" in window && "serviceWorker" in navigator) {
-      setSupported(true)
-      setPermission(Notification.permission)
-    }
-  }, [])
 
   const subscribe = async () => {
     if (!supported) return null
@@ -38,7 +35,6 @@ export function usePushNotifications() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subscription: subscription.toJSON(),
-          userId: user.id,
         }),
       })
 

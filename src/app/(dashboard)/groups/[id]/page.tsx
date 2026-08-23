@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { GroupChat } from "./group-chat"
+import type { Group } from "./group-chat"
 
 export default function GroupPage() {
   const { id } = useParams<{ id: string }>()
-  const [group, setGroup] = useState<any>(null)
+  const [group, setGroup] = useState<Group | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

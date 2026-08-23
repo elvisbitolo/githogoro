@@ -10,6 +10,14 @@ import Link from "next/link"
 import { formatRelativeTime } from "@/lib/utils"
 import type { ChatRoom, Message } from "@/types"
 
+interface IncomingMessageRow {
+  id: string
+  room_id: string
+  user_id: string
+  text: string | null
+  created_at: string
+}
+
 export function ChatRoom({ room }: { room: ChatRoom }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
@@ -25,8 +33,8 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
     // Load existing messages
     fetch(`/api/chat-rooms/${room.id}/messages`)
       .then((res) => res.json())
-      .then(({ data }) => {
-        if (data) setMessages(data)
+      .then((data) => {
+        if (Array.isArray(data)) setMessages(data)
       })
 
     // Subscribe to new messages
@@ -41,7 +49,16 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
           filter: `room_id=eq.${room.id}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message])
+          const raw = payload.new as IncomingMessageRow
+          if (raw.user_id === userId) return
+          const newMsg = {
+            ...raw,
+            roomId: raw.room_id,
+            userId: raw.user_id,
+            createdAt: raw.created_at,
+            mediaUrls: [],
+          } as Message
+          setMessages((prev) => [...prev, newMsg])
         }
       )
       .subscribe()
@@ -91,7 +108,7 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex gap-2 ${(msg as any).userId === userId ? "flex-row-reverse" : ""}`}
+            className={`flex gap-2 ${msg.userId === userId ? "flex-row-reverse" : ""}`}
           >
             <Avatar className="h-8 w-8 mt-1">
               <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700">
@@ -100,7 +117,7 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
             </Avatar>
             <div
               className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
-                (msg as any).userId === userId
+                msg.userId === userId
                   ? "bg-emerald-700 text-white rounded-br-md"
                   : "bg-zinc-100 text-zinc-900 rounded-bl-md"
               }`}
@@ -108,10 +125,10 @@ export function ChatRoom({ room }: { room: ChatRoom }) {
               <p>{msg.text}</p>
               <p
                 className={`text-[10px] mt-1 ${
-                  (msg as any).userId === userId ? "text-emerald-200" : "text-zinc-400"
+                  msg.userId === userId ? "text-emerald-200" : "text-zinc-400"
                 }`}
               >
-                {formatRelativeTime((msg as any).createdAt)}
+                {formatRelativeTime(msg.createdAt)}
               </p>
             </div>
           </div>

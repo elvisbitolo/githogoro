@@ -7,13 +7,61 @@ import { MessageSquare, Plus, Search, Pin, Bell, BellOff, Archive, MoreVertical 
 import Link from "next/link"
 import { formatRelativeTime } from "@/lib/utils"
 
+interface ConversationUser {
+  id: string
+  name?: string
+  avatarUrl?: string | null
+  lastActiveAt?: string | null
+}
+
+interface ConversationParticipant {
+  userId: string
+  lastReadAt?: string | null
+  isMuted?: boolean
+  user?: ConversationUser
+}
+
+interface Conversation {
+  id: string
+  createdAt?: string
+  pinnedBy?: { userId: string }[]
+  participants?: ConversationParticipant[]
+  messages?: {
+    id: string
+    text: string | null
+    senderId: string
+    createdAt: string
+  }[]
+}
+
 export default function ChatPage() {
-  const [conversations, setConversations] = useState<any[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [userId, setUserId] = useState("")
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<"all" | "unread" | "groups">("all")
+  const [onlineCutoff] = useState(() => Date.now())
   const supabase = createClient()
+
+  const fetchConversations = async () => {
+    try {
+      const res = await fetch("/api/conversations")
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        // Sort by last message time (most recent first)
+        const sorted = data.sort((a: Conversation, b: Conversation) => {
+          const aTime = a.messages?.[0]?.createdAt || a.createdAt || ""
+          const bTime = b.messages?.[0]?.createdAt || b.createdAt || ""
+          return new Date(bTime).getTime() - new Date(aTime).getTime()
+        })
+        setConversations(sorted)
+      }
+    } catch (e) {
+      console.error("Failed to fetch conversations:", e)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -42,36 +90,16 @@ export default function ChatPage() {
     })
   }, [])
 
-  const fetchConversations = async () => {
-    try {
-      const res = await fetch("/api/conversations")
-      const data = await res.json()
-      if (Array.isArray(data)) {
-        // Sort by last message time (most recent first)
-        const sorted = data.sort((a: any, b: any) => {
-          const aTime = a.messages?.[0]?.createdAt || a.createdAt
-          const bTime = b.messages?.[0]?.createdAt || b.createdAt
-          return new Date(bTime).getTime() - new Date(aTime).getTime()
-        })
-        setConversations(sorted)
-      }
-    } catch (e) {
-      console.error("Failed to fetch conversations:", e)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const getOtherParticipant = (conv: Conversation) =>
+    conv.participants?.find((p: ConversationParticipant) => p.userId !== userId)?.user
 
-  const getOtherParticipant = (conv: any) =>
-    conv.participants?.find((p: any) => p.userId !== userId)?.user
-
-  const getLastMessage = (conv: any) => {
+  const getLastMessage = (conv: Conversation) => {
     const msgs = conv.messages || []
     return msgs[msgs.length - 1]
   }
 
-  const getUnreadCount = (conv: any) => {
-    const participant = conv.participants?.find((p: any) => p.userId === userId)
+  const getUnreadCount = (conv: Conversation) => {
+    const participant = conv.participants?.find((p: ConversationParticipant) => p.userId === userId)
     if (!participant?.lastReadAt) return 0
     const lastRead = new Date(participant.lastReadAt)
     const lastMsg = conv.messages?.[0]
@@ -81,6 +109,8 @@ export default function ChatPage() {
   }
 
   const filtered = conversations.filter((conv) => {
+    if (activeTab === "unread" && getUnreadCount(conv) === 0) return false
+    if (activeTab === "groups" && (conv.participants?.length || 0) <= 2) return false
     if (!searchQuery.trim()) return true
     const q = searchQuery.toLowerCase()
     const other = getOtherParticipant(conv)
@@ -170,21 +200,21 @@ export default function ChatPage() {
             const other = getOtherParticipant(conv)
             const last = getLastMessage(conv)
             const unread = getUnreadCount(conv)
-            const isPinned = conv.pinnedBy?.some((p: any) => p.userId === userId)
-            const isMuted = conv.participants?.find((p: any) => p.userId === userId)?.isMuted
+            const isPinned = conv.pinnedBy?.some((p) => p.userId === userId)
+            const isMuted = conv.participants?.find((p) => p.userId === userId)?.isMuted
 
             return (
               <Link key={conv.id} href={`/chat/${conv.id}`}>
                 <div className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors cursor-pointer border-b border-zinc-50">
                   <div className="relative shrink-0">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={other?.avatarUrl} />
+                      <AvatarImage src={other?.avatarUrl || undefined} />
                       <AvatarFallback className="bg-emerald-100 text-emerald-700">
                         {(other?.name || "?").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     {/* Online indicator */}
-                    {other?.lastActiveAt && new Date(other.lastActiveAt).getTime() > Date.now() - 5 * 60 * 1000 && (
+                    {other?.lastActiveAt && new Date(other.lastActiveAt).getTime() > onlineCutoff - 5 * 60 * 1000 && (
                       <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />
                     )}
                   </div>

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next"
 
-const BASE_URL = "https://githogoro.onrender.com"
+const BASE_URL = "https://githogoro.vercel.app"
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date()

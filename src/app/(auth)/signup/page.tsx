@@ -137,7 +137,7 @@ export default function SignupPage() {
     }
 
     const formattedPhone = "+254" + phone.slice(1)
-    const email = `${formattedPhone}@githogoro.connect`
+    const email = `${formattedPhone}@githogoro.app`
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,

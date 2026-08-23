@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Users, Search, MapPin, Calendar, MessageCircle, Briefcase, Shield, Filter, UserPlus, UserCheck } from "lucide-react"
+import { Users, Search, MapPin, Calendar, MessageCircle, Briefcase, Shield, Filter, UserPlus, UserCheck, Flag } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { ReportButton } from "@/components/report-button"
 
 const avatarColors = [
   "bg-red-100 text-red-700",
@@ -129,7 +130,7 @@ export default function PeoplePage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Community Members</h1>
         <p className="text-zinc-500 mt-1">
-          Connect with your neighbours
+          Meet your neighbours
           {onlineCount > 0 && (
             <span className="ml-2 inline-flex items-center gap-1 text-emerald-600 text-sm font-medium">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -373,6 +374,13 @@ export default function PeoplePage() {
                       <MessageCircle className="h-4 w-4" />
                       Message
                     </Link>
+                    <ReportButton
+                      targetType="user"
+                      targetId={profile.id}
+                      className="inline-flex items-center justify-center rounded-xl border border-zinc-200 px-2.5 py-2 text-zinc-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                    >
+                      <Flag className="h-4 w-4" />
+                    </ReportButton>
                   </div>
                 </CardContent>
               </Card>
