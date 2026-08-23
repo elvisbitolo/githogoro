@@ -104,7 +104,7 @@ export const metadata: Metadata = {
     canonical: "https://githogoro.vercel.app",
   },
   other: {
-    "google-site-verification": "UKoNzw8c8iMUjQk56NbNTThfaz96V0GMdNM2Fatryz4",
+    "google-site-verification": "EO1A_95MmyPuFD2ULeSrZ2xzliMUJEdAWtRmclDUwPo",
     "application-name": "Githogoro",
     "msapplication-TileColor": "#1B4332",
     "theme-color": "#1B4332",
