@@ -7,6 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "db:backup": "node scripts/backup-db.mjs",
+    "db:backup:public": "node scripts/backup-db.mjs --schemas public",
     "postinstall": "prisma generate"
   },
   "dependencies": {
