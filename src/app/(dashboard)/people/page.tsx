@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { ReportButton } from "@/components/report-button"
+import { createClient } from "@/lib/supabase/client"
 
 const avatarColors = [
   "bg-red-100 text-red-700",
@@ -80,11 +81,18 @@ export default function PeoplePage() {
   const [roleFilter, setRoleFilter] = useState("All")
   const [showFilters, setShowFilters] = useState(false)
   const [followState, setFollowState] = useState<Record<string, boolean>>({})
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 60000)
     return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUserId(user.id)
+    })
   }, [])
 
   useEffect(() => {
@@ -97,6 +105,7 @@ export default function PeoplePage() {
   }, [])
 
   const handleFollow = async (userId: string) => {
+    if (userId === currentUserId) return
     const isFollowing = followState[userId]
     setFollowState((prev) => ({ ...prev, [userId]: !isFollowing }))
     try {
@@ -278,6 +287,7 @@ export default function PeoplePage() {
           {filtered.map((profile) => {
             const isOnline = profile.lastSeen &&
               (now - new Date(profile.lastSeen).getTime()) < 15 * 60 * 1000
+            const isSelf = profile.id === currentUserId
             return (
               <Card key={profile.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5">
@@ -353,20 +363,29 @@ export default function PeoplePage() {
                   </div>
 
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleFollow(profile.id)}
-                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
-                        followState[profile.id]
-                          ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
-                          : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
-                      }`}
-                    >
-                      {followState[profile.id] ? (
-                        <><UserCheck className="h-4 w-4" /> Following</>
-                      ) : (
-                        <><UserPlus className="h-4 w-4" /> Follow</>
-                      )}
-                    </button>
+                    {isSelf ? (
+                      <Link
+                        href="/profile"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-200 transition-colors"
+                      >
+                        <UserCheck className="h-4 w-4" /> You
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => handleFollow(profile.id)}
+                        className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                          followState[profile.id]
+                            ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                            : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                        }`}
+                      >
+                        {followState[profile.id] ? (
+                          <><UserCheck className="h-4 w-4" /> Following</>
+                        ) : (
+                          <><UserPlus className="h-4 w-4" /> Follow</>
+                        )}
+                      </button>
+                    )}
                     <Link
                       href="/chat/new"
                       className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800 transition-colors"
