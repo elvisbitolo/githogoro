@@ -93,6 +93,8 @@ export const en = {
     passwordStrengthGood: "Good",
     passwordStrengthStrong: "Strong",
     nameRequired: "Please enter your full name.",
+    continueWithGoogle: "Continue with Google",
+    orDivider: "or",
   },
   dashboard: {
     welcome: "Karibu",
@@ -276,6 +278,8 @@ export const sw: typeof en = {
     passwordStrengthGood: "Nzuri",
     passwordStrengthStrong: "Imara",
     nameRequired: "Tafadhali weka jina lako kamili.",
+    continueWithGoogle: "Endelea na Google",
+    orDivider: "au",
   },
   dashboard: {
     welcome: "Karibu",
