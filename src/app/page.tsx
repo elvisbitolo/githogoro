@@ -361,6 +361,9 @@ export default function LandingPage() {
               {t.landing.seoLinksTitle}
             </h3>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+              <Link href="/news" className="font-medium text-emerald-700 hover:underline dark:text-emerald-300">
+                {t.landing.seoLinkNews}
+              </Link>
               <Link href="/jobs" className="font-medium text-emerald-700 hover:underline dark:text-emerald-300">
                 {t.landing.seoLinkJobs}
               </Link>
@@ -382,6 +385,9 @@ export default function LandingPage() {
       <footer className="border-t border-zinc-200 bg-white py-8 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <nav className="mb-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <Link href="/news" className="hover:text-emerald-700 dark:hover:text-emerald-300">
+              News
+            </Link>
             <Link href="/jobs" className="hover:text-emerald-700 dark:hover:text-emerald-300">
               Jobs
             </Link>

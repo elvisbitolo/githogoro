@@ -101,6 +101,7 @@ export const en = {
     seoLinkBusinesses: "Businesses in Githogoro",
     seoLinkMarketplace: "Githogoro Marketplace",
     seoLinkEvents: "Githogoro Events",
+    seoLinkNews: "Githogoro News",
   },
   auth: {
     joinTitle: "Join Githogoro",
@@ -327,6 +328,7 @@ export const sw: typeof en = {
     seoLinkBusinesses: "Biashara Githogoro",
     seoLinkMarketplace: "Soko la Githogoro",
     seoLinkEvents: "Matukio ya Githogoro",
+    seoLinkNews: "Habari za Githogoro",
   },
   auth: {
     joinTitle: "Jiunge na Githogoro",
