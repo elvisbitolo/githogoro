@@ -212,6 +212,17 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-zinc-200 bg-white py-8">
         <div className="mx-auto max-w-6xl px-4 text-center">
+          <nav className="mb-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-500">
+            <Link href="/privacy" className="hover:text-emerald-700">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-emerald-700">
+              Terms of Service
+            </Link>
+            <Link href="/data-deletion" className="hover:text-emerald-700">
+              Data Deletion
+            </Link>
+          </nav>
           <p className="text-sm text-zinc-400">
             &copy; {FOOTER_YEAR} {t.site.name}. {t.landing.footer}
           </p>

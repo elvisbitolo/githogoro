@@ -94,6 +94,7 @@ export const en = {
     passwordStrengthStrong: "Strong",
     nameRequired: "Please enter your full name.",
     continueWithGoogle: "Continue with Google",
+    continueWithFacebook: "Continue with Facebook",
     orDivider: "or",
   },
   dashboard: {
@@ -279,6 +280,7 @@ export const sw: typeof en = {
     passwordStrengthStrong: "Imara",
     nameRequired: "Tafadhali weka jina lako kamili.",
     continueWithGoogle: "Endelea na Google",
+    continueWithFacebook: "Endelea na Facebook",
     orDivider: "au",
   },
   dashboard: {

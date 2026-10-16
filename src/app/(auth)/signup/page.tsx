@@ -36,6 +36,17 @@ function GoogleIcon() {
   )
 }
 
+function FacebookIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#1877F2"
+        d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
+      />
+    </svg>
+  )
+}
+
 function getPasswordStrength(password: string): { score: number; label: string; color: string } {
   let score = 0
   if (password.length >= 8) score++
@@ -216,6 +227,21 @@ export default function SignupPage() {
     }
   }
 
+  const handleFacebookSignup = async () => {
+    setLoading(true)
+    setError("")
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "facebook",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+      },
+    })
+    if (oauthError) {
+      setError(oauthError.message)
+      setLoading(false)
+    }
+  }
+
   const hasFieldError = (field: string) => touched[field] && fieldErrors[field]
 
   return (
@@ -232,16 +258,29 @@ export default function SignupPage() {
           <p className="text-zinc-500 mt-1">{t.auth.joinSubtitle}</p>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={handleGoogleSignup}
-          disabled={loading}
-        >
-          <GoogleIcon />
-          <span className="ml-2">{t.auth.continueWithGoogle}</span>
-        </Button>
+        <div className="space-y-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleGoogleSignup}
+            disabled={loading}
+          >
+            <GoogleIcon />
+            <span className="ml-2">{t.auth.continueWithGoogle}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleFacebookSignup}
+            disabled={loading}
+          >
+            <FacebookIcon />
+            <span className="ml-2">{t.auth.continueWithFacebook}</span>
+          </Button>
+        </div>
 
         <div className="flex items-center gap-3 my-4">
           <span className="h-px flex-1 bg-zinc-200" />
@@ -406,6 +445,18 @@ export default function SignupPage() {
             </Link>
           </p>
         </form>
+
+        <p className="mt-6 text-center text-xs text-zinc-400">
+          By continuing, you agree to our{" "}
+          <Link href="/terms" className="underline hover:text-emerald-700">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline hover:text-emerald-700">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </div>
     </div>
   )
