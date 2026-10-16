@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { MessageSquare, Briefcase, MapPin, Store, Video, Calendar, Shield, ChevronRight, UserPlus, MessageCircle, HeartHandshake } from "lucide-react"
 import { LanguageToggle } from "@/components/LanguageToggle"
+import { DarkModeToggle } from "@/components/dark-mode-toggle"
 import { useTranslations } from "@/lib/i18n/context"
 
 const icons = { MessageSquare, Briefcase, MapPin, Store, Video, Calendar, Shield }
@@ -22,8 +23,14 @@ export default function LandingPage() {
   const { t } = useTranslations()
   const [stats, setStats] = useState<Stats>({ residents: 0, jobs: 0, businesses: 0, activeUsers: 0 })
 
+  const [loadingStats, setLoadingStats] = useState(true)
+  
   useEffect(() => {
-    fetch("/api/stats").then((r) => r.json()).then(setStats).catch(() => {})
+    fetch("/api/stats")
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() => {})
+      .finally(() => setLoadingStats(false))
   }, [])
 
   const features = [
@@ -36,10 +43,10 @@ export default function LandingPage() {
   ]
 
   const statItems = [
-    { label: t.landing.statResidents, value: stats.residents > 0 ? stats.residents.toLocaleString() : "2,000+" },
-    { label: t.landing.statJobs, value: stats.jobs > 0 ? stats.jobs.toLocaleString() : "150+" },
-    { label: t.landing.statBiz, value: stats.businesses > 0 ? stats.businesses.toLocaleString() : "80+" },
-    { label: t.landing.statActive, value: stats.activeUsers > 0 ? stats.activeUsers.toLocaleString() : "500+" },
+    { label: t.landing.statResidents, value: stats.residents > 0 ? stats.residents.toLocaleString() : (loadingStats ? "—" : "—") },
+    { label: t.landing.statJobs, value: stats.jobs > 0 ? stats.jobs.toLocaleString() : (loadingStats ? "—" : "—") },
+    { label: t.landing.statBiz, value: stats.businesses > 0 ? stats.businesses.toLocaleString() : (loadingStats ? "—" : "—") },
+    { label: t.landing.statActive, value: stats.activeUsers > 0 ? stats.activeUsers.toLocaleString() : (loadingStats ? "—" : "—") },
   ]
 
   const steps = [
@@ -51,25 +58,26 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-dvh">
       {/* Navigation */}
-      <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/80">
         <div className="mx-auto max-w-6xl flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-emerald-700 flex items-center justify-center">
               <MessageSquare className="h-4 w-4 text-white" />
             </div>
-            <span className="font-semibold text-lg">{t.site.name}</span>
+            <span className="font-semibold text-lg dark:text-zinc-100">{t.site.name}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <LanguageToggle />
+            <DarkModeToggle />
             <Link
               href="/login"
-              className="hidden sm:inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className="hidden sm:inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               {t.nav.login}
             </Link>
             <Link
               href="/signup"
-              className="inline-flex h-9 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-medium text-white hover:bg-emerald-800 transition-colors shadow-sm"
+              className="inline-flex h-9 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-medium text-white hover:bg-emerald-800 transition-colors shadow-sm dark:bg-emerald-700 dark:hover:bg-emerald-600"
             >
               {t.nav.getStarted}
             </Link>
@@ -78,39 +86,40 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden text-white max-sm:min-h-[85vh]">
-          <div className="absolute inset-0">
-            <Image
-              src="/image.png"
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-center"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/60 via-emerald-900/25 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/50 via-transparent to-black/5" />
-          </div>
-        <div className="mx-auto max-w-6xl px-4 pt-56 min-[420px]:pt-64 sm:pt-72 pb-24 sm:pb-28 relative">
-          <div className="max-w-2xl mx-auto flex flex-col items-center text-center">
-            <h1 className="text-3xl min-[420px]:text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6 [text-shadow:0_2px_8px_rgba(0,0,0,0.45)] text-balance">
+      <section className="relative overflow-hidden text-white min-h-[90vh] sm:min-h-screen">
+        <div className="absolute inset-0">
+          <Image
+            src="/hero.webp"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            quality={90}
+            className="object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/70 via-emerald-900/40 to-transparent dark:from-zinc-950/80 dark:via-zinc-950/50" />
+          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/60 via-transparent to-black/5 dark:from-zinc-950/70" />
+        </div>
+        <div className="mx-auto max-w-6xl px-4 pt-32 sm:pt-40 md:pt-52 pb-24 sm:pb-28 relative">
+          <div className="max-w-2xl flex flex-col items-center text-center mx-auto">
+            <h1 className="text-3xl min-[420px]:text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.15] mb-6 [text-shadow:0_2px_10px_rgba(0,0,0,0.5)] text-balance">
               {t.landing.hero}{" "}
               <span className="text-amber-400 whitespace-nowrap">{t.landing.community}</span>
             </h1>
-            <p className="text-lg sm:text-xl text-emerald-100/80 max-w-lg max-sm:max-w-[22rem] mb-8 leading-relaxed [text-shadow:0_1px_4px_rgba(0,0,0,0.5)] text-pretty">
+            <p className="text-lg sm:text-xl text-emerald-100/90 dark:text-zinc-100/90 max-w-lg max-sm:max-w-[22rem] mb-8 leading-relaxed [text-shadow:0_1px_6px_rgba(0,0,0,0.55)] text-pretty">
               {t.landing.heroDesc}
             </p>
             <div className="flex flex-col min-[380px]:flex-row gap-3 min-[380px]:gap-4 w-full min-[380px]:w-auto max-w-[20rem] min-[380px]:max-w-none mx-auto">
               <Link
                 href="/signup"
-                className="inline-flex h-12 items-center justify-center rounded-xl bg-amber-500 px-8 text-base font-semibold text-white hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/25 w-full min-[380px]:w-auto"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-amber-500 px-8 text-base font-semibold text-white hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/30 w-full min-[380px]:w-auto dark:bg-amber-500 dark:hover:bg-amber-400"
               >
                 {t.nav.signUp}
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
                 href="/login"
-                className="inline-flex h-12 items-center justify-center rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm px-8 text-base font-medium text-white hover:bg-white/20 transition-all w-full min-[380px]:w-auto"
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-white/30 bg-white/15 backdrop-blur-md px-8 text-base font-medium text-white hover:bg-white/25 transition-all w-full min-[380px]:w-auto dark:border-white/20 dark:bg-white/10 dark:hover:bg-white/20"
               >
                 {t.nav.signIn}
               </Link>
@@ -118,13 +127,13 @@ export default function LandingPage() {
           </div>
         </div>
         {/* Stats bar */}
-        <div className="border-t border-white/10">
+        <div className="border-t border-white/10 dark:border-white/10">
           <div className="mx-auto max-w-6xl px-4 py-6">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
               {statItems.map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold text-amber-400">{stat.value}</div>
-                  <div className="text-sm text-emerald-100/60">{stat.label}</div>
+                  <div className="text-sm text-emerald-100/70 dark:text-zinc-100/70">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -133,11 +142,11 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-20 sm:py-28">
+      <section className="py-20 sm:py-28 dark:bg-zinc-950">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t.landing.featuresTitle}</h2>
-            <p className="text-zinc-500 max-w-lg mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-zinc-100">{t.landing.featuresTitle}</h2>
+            <p className="text-zinc-500 max-w-lg mx-auto dark:text-zinc-400">
               {t.landing.featuresDesc}
             </p>
           </div>
@@ -145,13 +154,13 @@ export default function LandingPage() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="group rounded-2xl border border-zinc-100 bg-white p-6 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5 hover:border-emerald-100 transition-all duration-300"
+                className="group rounded-2xl border border-zinc-100 bg-white p-6 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5 hover:border-emerald-100 transition-all duration-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-800/40 dark:hover:shadow-emerald-900/10"
               >
-                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4 group-hover:bg-emerald-700 group-hover:scale-110 transition-all duration-300">
-                  {(() => { const Icon = icons[feature.icon]; return <Icon className="h-6 w-6 text-emerald-700 group-hover:text-white transition-colors" /> })()}
+                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4 group-hover:bg-emerald-700 group-hover:scale-110 transition-all duration-300 dark:bg-emerald-900/40 dark:group-hover:bg-emerald-700">
+                  {(() => { const Icon = icons[feature.icon]; return <Icon className="h-6 w-6 text-emerald-700 group-hover:text-white transition-colors dark:text-emerald-300" /> })()}
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
-                <p className="text-zinc-500 text-sm leading-relaxed">{feature.desc}</p>
+                <h3 className="font-semibold text-lg mb-2 dark:text-zinc-100">{feature.title}</h3>
+                <p className="text-zinc-500 text-sm leading-relaxed dark:text-zinc-400">{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -159,11 +168,11 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 sm:py-28 bg-gradient-to-b from-white to-emerald-50/40">
+      <section className="py-20 sm:py-28 bg-gradient-to-b from-white to-emerald-50/40 dark:from-zinc-950 dark:to-zinc-900/70">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t.landing.stepsTitle}</h2>
-            <p className="text-zinc-500 max-w-lg mx-auto">{t.landing.stepsDesc}</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-zinc-100">{t.landing.stepsTitle}</h2>
+            <p className="text-zinc-500 max-w-lg mx-auto dark:text-zinc-400">{t.landing.stepsDesc}</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-10 sm:gap-8">
             {steps.map((step, i) => {
@@ -171,16 +180,16 @@ export default function LandingPage() {
               return (
                 <div key={step.title} className="relative text-center">
                   {i < 2 && (
-                    <div className="hidden sm:block absolute top-7 left-[calc(50%+3.5rem)] w-[calc(100%-7rem)] border-t-2 border-dashed border-emerald-200" />
+                    <div className="hidden sm:block absolute top-7 left-[calc(50%+3.5rem)] w-[calc(100%-7rem)] border-t-2 border-dashed border-emerald-200 dark:border-emerald-900/60" />
                   )}
-                  <div className="relative inline-flex h-14 w-14 rounded-2xl bg-emerald-700 text-white items-center justify-center shadow-lg shadow-emerald-700/25 mb-5">
+                  <div className="relative inline-flex h-14 w-14 rounded-2xl bg-emerald-700 text-white items-center justify-center shadow-lg shadow-emerald-700/30 mb-5 dark:bg-emerald-700 dark:shadow-emerald-900/40">
                     <Icon className="h-6 w-6" />
-                    <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-amber-500 text-xs font-bold flex items-center justify-center shadow">
+                    <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-amber-500 text-xs font-bold flex items-center justify-center shadow dark:bg-amber-500">
                       {i + 1}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
-                  <p className="text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto">{step.desc}</p>
+                  <h3 className="font-semibold text-lg mb-2 dark:text-zinc-100">{step.title}</h3>
+                  <p className="text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto dark:text-zinc-400">{step.desc}</p>
                 </div>
               )
             })}
@@ -189,18 +198,18 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-b from-emerald-50 to-[#FAF9F6]">
+      <section className="py-20 bg-gradient-to-b from-emerald-50 to-[#FAF9F6] dark:from-zinc-900/70 dark:to-zinc-950">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <div className="max-w-lg mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-zinc-100">
               {t.landing.ctaTitle}
             </h2>
-            <p className="text-zinc-500 mb-8">
+            <p className="text-zinc-500 mb-8 dark:text-zinc-400">
               {t.landing.ctaDesc}
             </p>
             <Link
               href="/signup"
-              className="inline-flex h-12 items-center justify-center rounded-xl bg-emerald-700 px-8 text-base font-semibold text-white hover:bg-emerald-800 transition-all shadow-lg"
+              className="inline-flex h-12 items-center justify-center rounded-xl bg-emerald-700 px-8 text-base font-semibold text-white hover:bg-emerald-800 transition-all shadow-lg dark:bg-emerald-700 dark:hover:bg-emerald-600"
             >
               {t.landing.ctaButton}
               <ChevronRight className="ml-2 h-5 w-5" />
@@ -210,20 +219,20 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200 bg-white py-8">
+      <footer className="border-t border-zinc-200 bg-white py-8 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto max-w-6xl px-4 text-center">
-          <nav className="mb-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-500">
-            <Link href="/privacy" className="hover:text-emerald-700">
+          <nav className="mb-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <Link href="/privacy" className="hover:text-emerald-700 dark:hover:text-emerald-300">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="hover:text-emerald-700">
+            <Link href="/terms" className="hover:text-emerald-700 dark:hover:text-emerald-300">
               Terms of Service
             </Link>
-            <Link href="/data-deletion" className="hover:text-emerald-700">
+            <Link href="/data-deletion" className="hover:text-emerald-700 dark:hover:text-emerald-300">
               Data Deletion
             </Link>
           </nav>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-zinc-400 dark:text-zinc-500">
             &copy; {FOOTER_YEAR} {t.site.name}. {t.landing.footer}
           </p>
         </div>
