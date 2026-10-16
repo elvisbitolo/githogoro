@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://githogoro.vercel.app/data-deletion" },
 }
 
-const CONTACT_EMAIL = "support@githogoro.app"
+const CONTACT_EMAIL = "elvisbitolo11@gmail.com"
 const LAST_UPDATED = "October 16, 2026"
 
 function Step({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
