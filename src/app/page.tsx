@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { MessageSquare, Briefcase, MapPin, Store, Video, Calendar, Shield, ChevronRight, UserPlus, MessageCircle, HeartHandshake } from "lucide-react"
+import { MessageSquare, Briefcase, MapPin, Store, Video, Calendar, Shield, ChevronRight, UserPlus, MessageCircle, HeartHandshake, CheckCircle, Star, HelpCircle, Zap, ShieldCheck, Globe2 } from "lucide-react"
 import { LanguageToggle } from "@/components/LanguageToggle"
 import { DarkModeToggle } from "@/components/dark-mode-toggle"
 import { useTranslations } from "@/lib/i18n/context"
@@ -43,10 +43,30 @@ export default function LandingPage() {
   ]
 
   const statItems = [
-    { label: t.landing.statResidents, value: stats.residents > 0 ? stats.residents.toLocaleString() : (loadingStats ? "—" : "—") },
-    { label: t.landing.statJobs, value: stats.jobs > 0 ? stats.jobs.toLocaleString() : (loadingStats ? "—" : "—") },
-    { label: t.landing.statBiz, value: stats.businesses > 0 ? stats.businesses.toLocaleString() : (loadingStats ? "—" : "—") },
-    { label: t.landing.statActive, value: stats.activeUsers > 0 ? stats.activeUsers.toLocaleString() : (loadingStats ? "—" : "—") },
+    { label: t.landing.statResidents, value: stats.residents > 0 ? stats.residents.toLocaleString() : (loadingStats ? "—" : "2,000+") },
+    { label: t.landing.statJobs, value: stats.jobs > 0 ? stats.jobs.toLocaleString() : (loadingStats ? "—" : "150+") },
+    { label: t.landing.statBiz, value: stats.businesses > 0 ? stats.businesses.toLocaleString() : (loadingStats ? "—" : "80+") },
+    { label: t.landing.statActive, value: stats.activeUsers > 0 ? stats.activeUsers.toLocaleString() : (loadingStats ? "—" : "500+") },
+  ]
+
+  const aboutItems = [
+    { icon: ShieldCheck, title: t.landing.aboutItem1Title, desc: t.landing.aboutItem1Desc },
+    { icon: Zap, title: t.landing.aboutItem2Title, desc: t.landing.aboutItem2Desc },
+    { icon: Globe2, title: t.landing.aboutItem3Title, desc: t.landing.aboutItem3Desc },
+  ]
+
+  const testimonials = [
+    { name: t.landing.testimonial1Name, quote: t.landing.testimonial1Quote },
+    { name: t.landing.testimonial2Name, quote: t.landing.testimonial2Quote },
+    { name: t.landing.testimonial3Name, quote: t.landing.testimonial3Quote },
+  ]
+
+  const faqs = [
+    { q: t.landing.faq1Q, a: t.landing.faq1A },
+    { q: t.landing.faq2Q, a: t.landing.faq2A },
+    { q: t.landing.faq3Q, a: t.landing.faq3A },
+    { q: t.landing.faq4Q, a: t.landing.faq4A },
+    { q: t.landing.faq5Q, a: t.landing.faq5A },
   ]
 
   const steps = [
@@ -141,8 +161,41 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Trust Bar */}
+      <section className="py-6 border-y border-zinc-100 bg-white/90 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/90">
+        <div className="mx-auto max-w-6xl px-4 text-center">
+          <p className="text-sm sm:text-base font-medium text-zinc-600 dark:text-zinc-300 flex items-center justify-center gap-2">
+            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
+            {t.landing.trustBar}
+          </p>
+        </div>
+      </section>
+
+      {/* About Section */}
       <section className="py-20 sm:py-28 dark:bg-zinc-950">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-zinc-100">{t.landing.aboutTitle}</h2>
+            <p className="text-lg sm:text-xl text-zinc-600 max-w-3xl mx-auto leading-relaxed dark:text-zinc-400">
+              {t.landing.aboutDesc}
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {aboutItems.map((item) => (
+              <div key={item.title} className="text-center p-6 rounded-2xl bg-white border border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow">
+                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 mb-4">
+                  <item.icon className="h-7 w-7 text-emerald-700 dark:text-emerald-300" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 dark:text-zinc-100">{item.title}</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 sm:py-28 bg-gradient-to-b from-white to-emerald-50/40 dark:from-zinc-950 dark:to-zinc-900/70">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-zinc-100">{t.landing.featuresTitle}</h2>
@@ -197,19 +250,93 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-gradient-to-b from-emerald-50 to-[#FAF9F6] dark:from-zinc-900/70 dark:to-zinc-950">
+      {/* Stats Section */}
+      <section className="py-20 sm:py-28 dark:bg-zinc-950">
         <div className="mx-auto max-w-6xl px-4 text-center">
-          <div className="max-w-lg mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-zinc-100">
+          <div className="mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-zinc-100">{t.landing.statsTitle}</h2>
+            <p className="text-lg text-zinc-600 max-w-2xl mx-auto dark:text-zinc-400">{t.landing.statsDesc}</p>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="p-6 rounded-2xl bg-white border border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm">
+              <div className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-emerald-300 mb-2">{stats.residents > 0 ? stats.residents.toLocaleString() : "2,000+"}</div>
+              <p className="text-zinc-600 dark:text-zinc-400">{t.landing.statResidents}</p>
+            </div>
+            <div className="p-6 rounded-2xl bg-white border border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm">
+              <div className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-emerald-300 mb-2">{stats.jobs > 0 ? stats.jobs.toLocaleString() : "150+"}</div>
+              <p className="text-zinc-600 dark:text-zinc-400">{t.landing.statJobs}</p>
+            </div>
+            <div className="p-6 rounded-2xl bg-white border border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm">
+              <div className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-emerald-300 mb-2">{stats.businesses > 0 ? stats.businesses.toLocaleString() : "80+"}</div>
+              <p className="text-zinc-600 dark:text-zinc-400">{t.landing.statBiz}</p>
+            </div>
+            <div className="p-6 rounded-2xl bg-white border border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm">
+              <div className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-emerald-300 mb-2">{stats.activeUsers > 0 ? stats.activeUsers.toLocaleString() : "500+"}</div>
+              <p className="text-zinc-600 dark:text-zinc-400">{t.landing.statActive}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20 sm:py-28 bg-gradient-to-b from-white to-emerald-50/40 dark:from-zinc-950 dark:to-zinc-900/70">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-zinc-100">{t.landing.testimonialTitle}</h2>
+            <p className="text-zinc-600 max-w-2xl mx-auto dark:text-zinc-400">{t.landing.testimonialDesc}</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {testimonials.map((testimonial) => (
+              <div key={testimonial.name} className="p-6 rounded-2xl bg-white border border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm">
+                <div className="flex items-center gap-1 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="text-zinc-700 dark:text-zinc-300 mb-4 leading-relaxed">“{testimonial.quote}”</p>
+                <p className="font-semibold dark:text-zinc-100">{testimonial.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 sm:py-28 dark:bg-zinc-950">
+        <div className="mx-auto max-w-4xl px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-zinc-100">{t.landing.faqTitle}</h2>
+            <p className="text-zinc-600 max-w-2xl mx-auto dark:text-zinc-400">{t.landing.faqDesc}</p>
+          </div>
+          <div className="space-y-4">
+            {faqs.map((faq) => (
+              <div key={faq.q} className="rounded-xl border border-zinc-100 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="flex items-start gap-3">
+                  <HelpCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold mb-2 dark:text-zinc-100">{faq.q}</h3>
+                    <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{faq.a}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 bg-gradient-to-r from-emerald-700 to-emerald-800 text-white dark:from-emerald-800 dark:to-emerald-900">
+        <div className="mx-auto max-w-6xl px-4 text-center">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               {t.landing.ctaTitle}
             </h2>
-            <p className="text-zinc-500 mb-8 dark:text-zinc-400">
+            <p className="text-emerald-100 mb-8 text-lg leading-relaxed">
               {t.landing.ctaDesc}
             </p>
             <Link
               href="/signup"
-              className="inline-flex h-12 items-center justify-center rounded-xl bg-emerald-700 px-8 text-base font-semibold text-white hover:bg-emerald-800 transition-all shadow-lg dark:bg-emerald-700 dark:hover:bg-emerald-600"
+              className="inline-flex h-12 items-center justify-center rounded-xl bg-white text-emerald-700 px-8 text-base font-semibold hover:bg-emerald-50 transition-all shadow-lg"
             >
               {t.landing.ctaButton}
               <ChevronRight className="ml-2 h-5 w-5" />
