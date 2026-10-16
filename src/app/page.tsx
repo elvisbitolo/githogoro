@@ -345,10 +345,55 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* About Githogoro — SEO content */}
+      <section className="py-20 sm:py-28 bg-white dark:bg-zinc-900">
+        <div className="mx-auto max-w-3xl px-4">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center dark:text-zinc-100">
+            {t.landing.seoTitle}
+          </h2>
+          <div className="space-y-4 text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            <p>{t.landing.seoP1}</p>
+            <p>{t.landing.seoP2}</p>
+            <p>{t.landing.seoP3}</p>
+          </div>
+          <div className="mt-10">
+            <h3 className="text-lg font-semibold mb-4 text-center dark:text-zinc-100">
+              {t.landing.seoLinksTitle}
+            </h3>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+              <Link href="/jobs" className="font-medium text-emerald-700 hover:underline dark:text-emerald-300">
+                {t.landing.seoLinkJobs}
+              </Link>
+              <Link href="/businesses" className="font-medium text-emerald-700 hover:underline dark:text-emerald-300">
+                {t.landing.seoLinkBusinesses}
+              </Link>
+              <Link href="/marketplace" className="font-medium text-emerald-700 hover:underline dark:text-emerald-300">
+                {t.landing.seoLinkMarketplace}
+              </Link>
+              <Link href="/events" className="font-medium text-emerald-700 hover:underline dark:text-emerald-300">
+                {t.landing.seoLinkEvents}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-zinc-200 bg-white py-8 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <nav className="mb-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <Link href="/jobs" className="hover:text-emerald-700 dark:hover:text-emerald-300">
+              Jobs
+            </Link>
+            <Link href="/businesses" className="hover:text-emerald-700 dark:hover:text-emerald-300">
+              Businesses
+            </Link>
+            <Link href="/marketplace" className="hover:text-emerald-700 dark:hover:text-emerald-300">
+              Marketplace
+            </Link>
+            <Link href="/events" className="hover:text-emerald-700 dark:hover:text-emerald-300">
+              Events
+            </Link>
             <Link href="/privacy" className="hover:text-emerald-700 dark:hover:text-emerald-300">
               Privacy Policy
             </Link>

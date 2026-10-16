@@ -130,33 +130,65 @@ export default function RootLayout({
 }>) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
-    name: "Githogoro",
-    url: "https://githogoro.vercel.app",
-    description:
-      "The #1 community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, join groups, buy & sell in the marketplace, and engage with the Githogoro community.",
-    applicationCategory: "SocialNetworkingApplication",
-    operatingSystem: "Web",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "KES",
-    },
-    about: {
-      "@type": "Place",
-      name: "Githogoro",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: "Nairobi",
-        addressRegion: "Westlands",
-        addressCountry: "KE",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://githogoro.vercel.app/#website",
+        name: "Githogoro",
+        alternateName: ["Githogoro Connect", "Githogoro Community App"],
+        url: "https://githogoro.vercel.app",
+        description:
+          "Githogoro community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, and stay connected.",
+        inLanguage: ["en", "sw"],
+        about: { "@id": "https://githogoro.vercel.app/#place" },
+        publisher: { "@id": "https://githogoro.vercel.app/#organization" },
+        potentialAction: {
+          "@type": "SearchAction",
+          target: {
+            "@type": "EntryPoint",
+            urlTemplate: "https://githogoro.vercel.app/jobs?q={search_term_string}",
+          },
+          "query-input": "required name=search_term_string",
+        },
       },
-    },
-    author: {
-      "@type": "Organization",
-      name: "Githogoro",
-      url: "https://githogoro.vercel.app",
-    },
+      {
+        "@type": "Organization",
+        "@id": "https://githogoro.vercel.app/#organization",
+        name: "Githogoro",
+        url: "https://githogoro.vercel.app",
+        logo: "https://githogoro.vercel.app/icons/icon-512x512.png",
+        areaServed: { "@id": "https://githogoro.vercel.app/#place" },
+      },
+      {
+        "@type": "Place",
+        "@id": "https://githogoro.vercel.app/#place",
+        name: "Githogoro",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Nairobi",
+          addressRegion: "Westlands",
+          addressCountry: "KE",
+        },
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://githogoro.vercel.app/#app",
+        name: "Githogoro",
+        url: "https://githogoro.vercel.app",
+        description:
+          "The #1 community app for Githogoro, Nairobi. Chat with neighbors, find local jobs, discover businesses, join groups, buy & sell in the marketplace, and engage with the Githogoro community.",
+        applicationCategory: "SocialNetworkingApplication",
+        operatingSystem: "Web",
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "KES",
+        },
+        about: { "@id": "https://githogoro.vercel.app/#place" },
+        author: { "@id": "https://githogoro.vercel.app/#organization" },
+        publisher: { "@id": "https://githogoro.vercel.app/#organization" },
+      },
+    ],
   }
 
   return (
