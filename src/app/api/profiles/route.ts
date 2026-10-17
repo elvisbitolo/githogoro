@@ -27,7 +27,10 @@ export async function GET(request: Request) {
     }
 
     const profiles = await prisma.profile.findMany({
-      where,
+      where: {
+        ...where,
+        isBanned: false,
+      },
       orderBy: { createdAt: "desc" },
       take: search ? 50 : 100,
       select: {
@@ -45,7 +48,18 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json(profiles);
+    const following = await prisma.follow.findMany({
+      where: {
+        followerId: user.id,
+        followingId: { in: profiles.map((p) => p.id) },
+      },
+      select: { followingId: true },
+    });
+    const followingIds = new Set(following.map((f) => f.followingId));
+
+    return NextResponse.json(
+      profiles.map((p) => ({ ...p, isFollowing: followingIds.has(p.id) }))
+    );
   } catch (error) {
     console.error("GET /api/profiles error:", error);
     return NextResponse.json({ error: "Failed to fetch profiles" }, { status: 500 });

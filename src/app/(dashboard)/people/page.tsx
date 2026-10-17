@@ -73,7 +73,7 @@ export default function PeoplePage() {
   const [profiles, setProfiles] = useState<Array<{
     id: string; name: string; bio: string | null; zone: string | null;
     avatarUrl: string | null; role: string | null; isVerified: boolean;
-    createdAt: string; lastSeen: string | null;
+    createdAt: string; lastSeen: string | null; isFollowing?: boolean;
   }>>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -96,12 +96,26 @@ export default function PeoplePage() {
   }, [])
 
   useEffect(() => {
-    fetch("/api/profiles")
+    const controller = new AbortController()
+    fetch("/api/profiles", { signal: controller.signal })
       .then((res) => res.ok ? res.json() : [])
       .then((data) => {
-        if (Array.isArray(data)) setProfiles(data)
+        if (Array.isArray(data)) {
+          setProfiles(data)
+          setFollowState((prev) => {
+            const next = { ...prev }
+            for (const p of data) {
+              if (p.isFollowing !== undefined) next[p.id] = p.isFollowing
+            }
+            return next
+          })
+        }
         setLoading(false)
       })
+      .catch((e) => {
+        if (e.name !== "AbortError") setLoading(false)
+      })
+    return () => controller.abort()
   }, [])
 
   const handleFollow = async (userId: string) => {
@@ -109,9 +123,10 @@ export default function PeoplePage() {
     const isFollowing = followState[userId]
     setFollowState((prev) => ({ ...prev, [userId]: !isFollowing }))
     try {
-      await fetch(`/api/follow/${userId}`, {
+      const res = await fetch(`/api/follow/${userId}`, {
         method: isFollowing ? "DELETE" : "POST",
       })
+      if (!res.ok) throw new Error("Request failed")
     } catch {
       setFollowState((prev) => ({ ...prev, [userId]: isFollowing }))
     }
@@ -124,7 +139,7 @@ export default function PeoplePage() {
       p.bio?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesZone = zoneFilter === "All Zones" || p.zone === zoneFilter
     const matchesRole = roleFilter === "All" ||
-      (roleFilter === "Resident" && (!p.role || p.role === "resident")) ||
+      (roleFilter === "Resident" && (!p.role || p.role?.toLowerCase() === "resident")) ||
       p.role?.toLowerCase() === roleFilter.toLowerCase()
     return matchesSearch && matchesZone && matchesRole
   })
@@ -320,17 +335,17 @@ export default function PeoplePage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                        {profile.role === "admin" && (
+                        {(profile.role?.toLowerCase() === "admin" || profile.role?.toLowerCase() === "moderator") && (
                           <Badge className="bg-emerald-600 text-white text-[10px] px-1.5 py-0">
-                            <Shield className="h-2.5 w-2.5 mr-0.5" /> Admin
+                            <Shield className="h-2.5 w-2.5 mr-0.5" /> {profile.role?.toLowerCase() === "moderator" ? "Moderator" : "Admin"}
                           </Badge>
                         )}
-                        {profile.role === "business" && (
+                        {profile.role?.toLowerCase() === "business" && (
                           <Badge className="bg-amber-500 text-white text-[10px] px-1.5 py-0">
                             <Briefcase className="h-2.5 w-2.5 mr-0.5" /> Business
                           </Badge>
                         )}
-                        {(!profile.role || profile.role === "resident") && (
+                        {(!profile.role || profile.role?.toLowerCase() === "resident") && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Resident</Badge>
                         )}
                       </div>
